@@ -22,7 +22,7 @@
 #define PADDLE_A          PB7                     // Morse Paddle "dit"
 #define PADDLE_B          PB8                     // Morse Paddle "dah"
 #define ENCODER_A         PA8                     // Rotary Encoder output A
-#define ENCODER_B         PA9                     // Rotary Encoder output A
+#define ENCODER_B         PA9                     // Rotary Encoder output B
 #define ENCODER_BUTTON    PA4                     // Rotary Encoder switch
 #define TFT_DC            PA0
 #define TFT_CS            PA1
