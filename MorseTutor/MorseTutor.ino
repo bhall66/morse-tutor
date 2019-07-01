@@ -2,12 +2,12 @@
       Author:   Bruce E. Hall, w8bh.net
         Date:   01 Jul 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display,
-	              rotary encoder, piezo or speaker.
+                rotary encoder, piezo or speaker.
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
     
  Description:   Practice sending & receiving morse code
                 Derived from Jack Purdum's "Morse Code Tutor"
-				        Full description & tutorial at w8bh.net
+                Full description & tutorial at w8bh.net
    
  **************************************************************************/
 
