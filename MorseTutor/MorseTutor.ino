@@ -707,9 +707,9 @@ void setCodeSpeed()
     {
       codeSpeed += dir;                           // ...so change speed up/down          
       if (codeSpeed<MINSPEED) 
-		    codeSpeed = MINSPEED;                     // dont go below minimum
+        codeSpeed = MINSPEED;                     // dont go below minimum
       if (codeSpeed>MAXSPEED) 
-		    codeSpeed = MAXSPEED;                     // dont go above maximum
+        codeSpeed = MAXSPEED;                     // dont go above maximum
       tft.fillRect(x,y,50,50,BLACK);              // erase old speed
       tft.setCursor(x,y);
       tft.print(codeSpeed);                       // and show new speed    
@@ -736,9 +736,9 @@ void setCharSpeed()
     {
       charSpeed += dir;                           // ...so change speed up/down 
       if (charSpeed<MINSPEED) 
-		    charSpeed = MINSPEED;                     // dont go below minimum
+        charSpeed = MINSPEED;                     // dont go below minimum
       if (charSpeed>MAXSPEED) 
-		    charSpeed = MAXSPEED;                     // dont go above maximum
+        charSpeed = MAXSPEED;                     // dont go above maximum
       tft.fillRect(x,y,50,50,BLACK);              // erase old speed
       tft.setCursor(x,y);
       tft.print(charSpeed);                       // and show new speed 
