@@ -1,11 +1,13 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   29 Jun 2019
-    Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
+        Date:   01 Jul 2019
+    Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display,
+	              rotary encoder, piezo or speaker.
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
     
  Description:   Practice sending & receiving morse code
                 Derived from Jack Purdum's "Morse Code Tutor"
+				        Full description & tutorial at w8bh.net
    
  **************************************************************************/
 
@@ -36,7 +38,7 @@
 //===================================  Encoder/Paddle Constants =========================
 #define SPEAKER           PB0                     // Piezo/Speaker pin
 #define ENCODER_A         PA8                     // Rotary Encoder output A
-#define ENCODER_B         PA9                     // Rotary Encoder output A
+#define ENCODER_B         PA9                     // Rotary Encoder output B
 #define ENCODER_BUTTON    PA4                     // Rotary Encoder switch
 #define ENCODER_TICKS       3                     // Ticks required to register movement
 #define PADDLE_A          PB7                     // Morse Paddle "dit"
@@ -163,7 +165,7 @@ int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
 char *menu0[]    = {" Letters ", " Numbers ", " Punc    ", " Words   ", " Let-Num ", "Call Sign", " QSO     ", " Exit    "};
 char *menu1[]    = {" Practice", " CopyCat ", "Flashcard", " Exit    "};
-char *menu2[]    = {" Speed   ", "CharSpeed", " Chk Spd ", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
+char *menu2[]    = {" Speed   ", "CharSpeed", "Chk Speed", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
 
 //===================================  Rotary Encoder Code  =============================
 
@@ -286,12 +288,12 @@ bool dahPressed()
 
 int extracharDit()
 {
-  return (3158/codeSpeed) - (1958/charSpeed); 
+  return (3158/codeSpeed) - (1958/charSpeed);     // calculate Farnsworth delay  
 }
 
 int intracharDit()
 {
-  return (1200/charSpeed);
+  return (1200/charSpeed);                        // no Farnsworth delay inside char
 }
 
 void ditSpaces(int spaces=1) {                    // user specifies #dits to wait
@@ -301,7 +303,7 @@ void ditSpaces(int spaces=1) {                    // user specifies #dits to wai
 
 void characterSpace()
 {
-  int fudge = (charSpeed/codeSpeed)-1;            // number of fast dits needed to convert
+  int fudge = (charSpeed/codeSpeed)-1;            // number of intrachar dits needed to convert...
   delay(fudge*ditPeriod);                         // single intrachar dit to slower extrachar dit
   delay(2*extracharDit());                        // 3 total (last element includes 1)
   //ditSpaces(2);                                 
@@ -365,6 +367,30 @@ void sendCharacter(char c) {                      // send a single ASCII charact
 void sendString (char *ptr) {             
   while (*ptr)                                    // send the entire string
     sendCharacter(*ptr++);                        // one character at a time
+}
+
+void showCharacter(char c, int row, int col)      // display a character at given row & column
+{
+  int x = col * COLSPACING;                       // convert column to x coordinate
+  int y = TOPDEADSPACE + (row * ROWSPACING);      // convert row to y coordinate
+  tft.setCursor(x,y);                             // position character on screen
+  tft.print(c);                                   // and display it 
+}
+
+void addCharacter(char c)
+{
+  showCharacter(c,textRow,textCol);               // display character & current row/col position
+  textCol++;                                      // go to next position on the current row
+  if ((textCol>=MAXCOL) ||                        // are we at end of the row?
+     ((c==' ') && (textCol>MAXCOL-7)))            // or at a wordspace thats near end of row?
+  {
+    textRow++; textCol=0;                         // yes, so advance to beginning of next row
+    if (textRow >= MAXROW)                        // but have we run out of rows?
+    {
+      eraseMenus();                               // yes, so clear screen
+      textRow=0;                                  // and start on first row
+    }
+  }
 }
 
 //===================================  Receive Menu  ====================================
@@ -662,6 +688,7 @@ void useDefaults()                                // if things get messed up...
   pitch     = DEFAULTPITCH;
   ditPaddle = PADDLE_A;
   dahPaddle = PADDLE_B;
+  ditPeriod = intracharDit();                     // set up character timing from WPM 
   saveConfig();
   roger();
 }
@@ -763,31 +790,7 @@ void setDitPaddle()
   roger();                                        // and acknowledge
 }
 
-//===================================  Menu Routines ====================================
-
-void showCharacter(char c, int row, int col)      // display a character at given row & column
-{
-  int x = col * COLSPACING;                       // convert column to x coordinate
-  int y = TOPDEADSPACE + (row * ROWSPACING);      // convert row to y coordinate
-  tft.setCursor(x,y);                             // position character on screen
-  tft.print(c);                                   // and display it 
-}
-
-void addCharacter(char c)
-{
-  showCharacter(c,textRow,textCol);               // display character & current row/col position
-  textCol++;                                      // go to next position on the current row
-  if ((textCol>=MAXCOL) ||                        // are we at end of the row?
-     ((c==' ') && (textCol>MAXCOL-7)))            // or at a wordspace thats near end of row?
-  {
-    textRow++; textCol=0;                         // yes, so advance to beginning of next row
-    if (textRow >= MAXROW)                        // but have we run out of rows?
-    {
-      eraseMenus();                               // yes, so clear screen
-      textRow=0;                                  // and start on first row
-    }
-  }
-}
+//===================================  Menu System Routines =============================
 
 void eraseMenus()                                 // clear the text portion of the display
 {
@@ -920,7 +923,7 @@ void splashScreen()
   tft.setTextSize(3);
   tft.setTextColor(TEXTCOLOR,BLACK);
   tft.setCursor(50, 50);
-  tft.print("Morse Madness");
+  tft.print("Morse Tutor");
   delay(3000);
   tft.fillScreen(BLACK);   
 }
