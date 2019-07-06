@@ -4,9 +4,12 @@
     Hardware:   STM32F103C "Blue Pill", Piezo Buzzer, 2.2" ILI9341 LCD,
                 Adafruit #477 rotary encoder or similar
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
+       Legal:   Copyright (c) 2019  Bruce E. Hall.
+                Open Source under the terms of the MIT License. 
     
- Description:   Morse Code Tutor, Part 6
-                Builds on Part 5, adding a menu system
+ Description:   Part 6 of the tutorial at w8bh.net
+                Practice sending & receiving morse code
+                Inspired by Jack Purdum's "Morse Code Tutor"
    
  **************************************************************************/
 

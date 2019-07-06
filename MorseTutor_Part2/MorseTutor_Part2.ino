@@ -1,8 +1,10 @@
 /**************************************************************************
- Author:    Bruce E. Hall, w8bh.net
- Date:      25 Jun 2019
- Hardware:  STM32F103C "Blue Pill" with Piezo Buzzer
-
+    Author:    Bruce E. Hall, w8bh.net
+    Date:      25 Jun 2019
+    Hardware:  STM32F103C "Blue Pill" with Piezo Buzzer
+      Legal:   Copyright (c) 2019  Bruce E. Hall.
+               Open Source under the terms of the MIT License. 
+    
  Description:  Morse Code Demo, using LED & Buzzer outputs  
                Ham Radio alternative to LED blink sketch!
                Algorithm can be modified for memory keyers, etc.

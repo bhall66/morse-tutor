@@ -3,9 +3,12 @@
         Date:   29 Jun 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
+       Legal:   Copyright (c) 2019  Bruce E. Hall.
+                Open Source under the terms of the MIT License. 
     
- Description:   Practice sending & receiving morse code
-                Derived from Jack Purdum's "Morse Code Tutor"
+ Description:   Part 7 (final) of the tutorial at w8bh.net
+                Practice sending & receiving morse code
+                Inspired by Jack Purdum's "Morse Code Tutor"
    
  **************************************************************************/
 

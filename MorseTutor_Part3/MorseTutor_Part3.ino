@@ -3,9 +3,12 @@
         Date:   26 Jun 2019
     Hardware:   STM32F103C "Blue Pill" with Piezo Buzzer
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
+       Legal:   Copyright (c) 2019  Bruce E. Hall.
+                Open Source under the terms of the MIT License. 
     
- Description:   Morse Code Demo, using LED & Buzzer outputs.  
-                Builds on SimpleMorse, adding routines for sending
+ Description:   Part 4 of the tutorial at w8bh.net  
+                Morse Code Demo, using LED & Buzzer outputs.  
+                Builds on Part 4, adding routines for sending
                 random letters, numbers, words, and callsigns.
    
  **************************************************************************/
