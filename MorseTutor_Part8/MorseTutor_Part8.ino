@@ -6,7 +6,8 @@
        Legal:   Copyright (c) 2019  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
- Description:   Practice sending & receiving morse code
+ Description:   Part 8 of the tutorial at w8bh.net
+                Practice sending & receiving morse code
                 Inspired by Jack Purdum's "Morse Code Tutor"
                 
                 >> THIS VERSION UNDER DEVELOPMENT <<<
