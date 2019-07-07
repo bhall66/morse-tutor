@@ -7,7 +7,7 @@
                 Open Source under the terms of the MIT License. 
     
  Description:   Use Paddles to send Morse Code.
-                Connect piezeo to PB12.  Other lead to ground.
+                Connect piezo to PB12.  Other lead to ground.
                 Connect paddles to PB13 & PB14.  Other lead to ground.
    
  **************************************************************************/
