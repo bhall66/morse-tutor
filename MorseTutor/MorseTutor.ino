@@ -180,8 +180,8 @@ bool paused   = false;
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
 char *menu0[]    = {" Letters ", " Words   ", " Book    ", " QSO     ", " Numbers ", " Punc    ", " Mixed   ", "Callsigns",  " Exit    "};
-char *menu1[]    = {" Practice", " CopyCat ", "Flashcard", " Exit    "};
-char *menu2[]    = {" Speed   ", "CharSpeed", " Chk Spd ", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
+char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Call", "Flashcard", " Exit    "};
+char *menu2[]    = {" Speed   ", "CharSpeed", "Chk Speed", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
 
 //===================================  Rotary Encoder Code  =============================
 
@@ -597,11 +597,10 @@ void sendBook()
 void checkSpeed()
 {
   long start=millis();
-  for (int i=0; i<4; i++)
-    sendString("PARIS ");                         // send "PARIS" 4 times                                     
+  sendString("PARIS ");                           // send "PARIS"                                     
   long elapsed=millis()-start;                    // see how long it took
   dit();                                          // sound out the end.
-  float wpm = 240000.0/elapsed;                   // convert time to WPM
+  float wpm = 60000.0/elapsed;                    // convert time to WPM
   tft.setTextSize(3);
   tft.setCursor(100,80);
   tft.print(wpm);                                 // display result
@@ -664,28 +663,70 @@ void receiveCode()                                // get Morse from user & displ
 
 void copyCallsigns()                              // show a callsign & see if user can copy it
 {
-  char ch, call[8], response[20]; 
+  char call[8];
+  while (!button_pressed)                      
+  {  
+    randomCallsign(call);                         // make a random callsign       
+    mimick(call);
+  }
+}
+
+void copyCharacters()
+{
+  char text[8]; 
   while (!button_pressed)                      
   {
-    textRow=1; textCol=10;
-    strcpy(response,"");   
-    randomCallsign(call);                         // make a random callsign       
-    sendString(call);                             // send it.
-    textRow=2; textCol=10;
-    while (!button_pressed && !ditPressed()       // wait until user is ready
-      && !dahPressed()) ;
-    do {                                          // user has started keying...
-      ch = receivedChar();                        // get a character
-      if (ch!=' ') addChar(response,ch);          // add it to the response
-      addCharacter(ch);                           // and put it on screen
-    } while (ch!=' ');                            // space = word timeout 
-    if (!strcmp(call,response)) {                 // did user match the call?
-      tft.setCursor(100,120);
-      tft.print("GREAT JOB!");
-    }
-    delay(3000);                                  // wait between attempts
-    eraseMenus();
+    strcpy(text,"");                              // start with empty string  
+    addChar(text,randomLetter());                 // add a random letter
+    mimick(text);                                 // compare it to user input
   }
+}
+
+void copyTwoChars()
+{
+  char text[8]; 
+  while (!button_pressed)                      
+  {
+    strcpy(text,"");                              // start with empty string  
+    addChar(text,randomLetter());                 // add a random letter
+    addChar(text,randomLetter());                 // make that two random letters
+    mimick(text);                                 // compare it to user input
+  }
+}
+
+void mimick(char *text)
+{
+  const int x=200,y=50,wd=105,ht=80;             // posn & size of score card
+  char ch, response[20]; 
+  static int score=0;
+  textRow=1; textCol=10;
+  sendString(text);                               // send it.
+  strcpy(response,"");
+  textRow=2; textCol=10;
+  while (!button_pressed && !ditPressed()         // wait until user is ready
+    && !dahPressed()) ;
+  do {                                            // user has started keying...
+    ch = receivedChar();                          // get a character
+    if (ch!=' ') addChar(response,ch);            // add it to the response
+    addCharacter(ch);                             // and put it on screen
+  } while (ch!=' ');                              // space = word timeout 
+  if (!strcmp(text,response))                     // did user match the text?
+  {                                               // Yes! So show score card
+    tft.setCursor(x+15,y+20);
+    tft.setTextSize(6);                           // big text
+    tft.setTextColor(BLACK,GREEN);                // inverted font
+    tft.fillRect(x,y,wd,ht,GREEN);                // with green background
+    tft.print(++score);                           // show the score
+    tft.setTextSize(2);                           // resume usual size
+    tft.setTextColor(TEXTCOLOR,BLACK);            // resume usual colors
+  } 
+  else 
+  {                                               // Oh no! User didnt match text
+    tft.fillRect(x,y,wd,ht,RED);                  // red scorecard
+    score = 0;                                    // reset score
+  }
+  delay(FLASHCARDDELAY);                          // wait between attempts
+  eraseMenus();                                   // erase screen for next attempt
 }
 
 void flashcards()
@@ -1037,8 +1078,10 @@ void loop()
     case 07: sendCallsigns(); break;
 
     case 10: receiveCode(); break;
-    case 11: copyCallsigns(); break;
-    case 12: flashcards(); break;
+    case 11: copyCharacters(); break;
+    case 12: copyTwoChars(); break;
+    case 13: copyCallsigns(); break;
+    case 14: flashcards(); break;
     
     case 20: setCodeSpeed(); break;
     case 21: setCharSpeed(); break;
