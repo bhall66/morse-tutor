@@ -993,11 +993,18 @@ void initScreen()
 }
 
 void splashScreen()                               // not splashy at all!
-{                                                 // have fun spucing it up.
+{                                                 // have fun sprucing it up.
   tft.setTextSize(3);
-  tft.setTextColor(TEXTCOLOR,BLACK);
-  tft.setCursor(50, 50);
-  tft.print("Morse Tutor"); 
+  tft.setTextColor(TEXTCOLOR);
+  tft.setCursor(100, 50); 
+  tft.print(MYCALL);                              // add your callsign (set MYCALL at top of sketch)
+  tft.setTextColor(CYAN);
+  tft.setCursor(15, 90);      
+  tft.print("Morse Code Tutor");                  // add title
+  tft.setTextSize(1);
+  tft.setCursor(50,220);
+  tft.setTextColor(WHITE);
+  tft.print("Copyright (c) 2019, Bruce E. Hall"); // legal small print
   delay(2000);                                    // keep it on screen for a while
   tft.fillScreen(BLACK);                          // then erase it.
 }
