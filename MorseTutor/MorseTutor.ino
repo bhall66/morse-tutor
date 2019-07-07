@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   06 Jul 2019
+        Date:   07 Jul 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -20,6 +20,19 @@
 #include "EEPROM.h"
 #include "SD.h"
 
+//===================================  Hardware Connections =============================
+#define TFT_DC            PA0                     // LCD "DC" pin
+#define TFT_CS            PA1                     // LCD "CS" pin
+#define TFT_RST           PA2                     // LCD "RST" pin
+#define SD_CS             PA4                     // SD card "CS" pin
+#define ENCODER_A        PC15                     // Rotary Encoder output A
+#define ENCODER_B        PC14                     // Rotary Encoder output B
+#define LED              PC13                     // onboard LED pin
+#define ENCODER_BUTTON    PB9                     // Rotary Encoder switch
+#define PADDLE_A         PB14                     // Morse Paddle "dit"
+#define PADDLE_B         PB13                     // Morse Paddle "dah"
+#define PIEZO            PB12                     // pin attached to piezo element
+
 //===================================  Morse Code Constants =============================
 #define MYCALL          "W8BH"
 #define DEFAULTSPEED       13                     // character speed in Words per Minute
@@ -28,24 +41,9 @@
 #define DEFAULTPITCH     1200                     // default pitch in Hz of morse audio
 #define MAXPITCH         2800                     // highest allowed pitch
 #define MINPITCH          300                     // how low can you go
-#define LED              PC13                     // onboard LED pin
-#define PIEZO            PB12                     // pin attached to piezo element
 #define WORDSIZE            5                     // number of chars per random word
 #define FLASHCARDDELAY   2000                     // wait in mS between cards
-
-//===================================  LCD Display Constants ============================
-#define TFT_DC            PA0
-#define TFT_CS            PA1
-#define TFT_RST           PA2
-#define SD_CS             PA4
-
-//===================================  Encoder/Paddle Constants =========================
-#define ENCODER_A        PC15                     // Rotary Encoder output A
-#define ENCODER_B        PC14                     // Rotary Encoder output B
-#define ENCODER_BUTTON    PB9                     // Rotary Encoder switch
 #define ENCODER_TICKS       3                     // Ticks required to register movement
-#define PADDLE_A          PB7                     // Morse Paddle "dit"
-#define PADDLE_B          PB8                     // Morse Paddle "dah"
 
 //===================================  Color Constants ==================================
 #define BLACK          0x0000
@@ -63,7 +61,7 @@
 #define DISPLAYHEIGHT     240                     // Number of LCD pixels in short-axis
 #define TOPDEADSPACE       30                     // All submenus appear below top line
 #define MENUSPACING       100                     // Width in pixels for each menu column
-#define ROWSPACING         25                     // Height in pixels for each text row
+#define ROWSPACING         23                     // Height in pixels for each text row
 #define COLSPACING         12                     // Width in pixels for each text character
 #define MAXCOL   DISPLAYWIDTH/COLSPACING          // Number of characters per row    
 #define MAXROW  (DISPLAYHEIGHT-TOPDEADSPACE)/ROWSPACING  // Number of text-rows per screen
@@ -84,11 +82,25 @@ volatile boolean  button_released  = false;       // true if the button has been
 volatile long     button_downtime  = 0L;          // ms the button was pushed before released
 
 //===================================  Morse Code Variables =============================
-char *commonWords = "a an the this these that some all any every who which what such other I me my we us our you your he him his she her it its they them their man men people time work well May will can one two great little first at by on upon over before to from with in into out for of about up when then now how so like as well very only no not more there than and or if but be am is are was were been has have had may can could will would shall should must say said like go come do made work";
-char *hamWords[]  = {"DE", "TNX FER", "BT", "WX", "HR", "TEMP", "ES", "RIG", "ANT", "DIPOLE", "VERTICAL", // 0-10
-                    "BEAM", "HW", "CPI", "WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY",      // 11-20
-                    "RPT", "NAME", "QTH", "CALL", "UR", "SLD", "FB", "RST"                                // 21-28
+
+                    // the following is a list of the 100 most-common English words, in frequency order
+                    // see: https://www.dictionary.com/e/common-words/
+                    // from The Brown Corpus Standard Sample of Present-Day American English 
+                    // (Providence, RI: Brown University Press, 1979)
+                    
+char *words[]     = {"the", "of", "and", "to", "a", "in", "that", "is", "was", "he", 
+                     "for", "it", "with", "as", "his", "on", "be", "at", "by", "I", 
+                     "this", "had", "not", "are", "but", "from", "or", "have", "an", "they", 
+                     "which", "one", "you", "were", "all", "her", "she", "there", "would", "their", 
+                     "we", "him", "been", "has", "when", "who", "will", "no", "more", "if", 
+                     "out", "so", "up", "said", "what", "its", "about", "than", "into", "them", 
+                     "can", "only", "other", "time", "new", "some", "could", "these", "two", "may", 
+                     "first", "then", "do", "any", "like", "my", "now", "over", "such", "our", 
+                     "man", "me", "even", "most", "made", "after", "also", "did", "many", "off", 
+                     "before", "must", "well", "back", "through", "years", "much", "where", "your", "way"  
                     };
+char *antenna[]   = {"DIPOLE", "VERTICAL", "BEAM"};
+char *weather[]   = {"WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY"};
 char *names[]     = {"FRED", "JOHN", "TERRY", "JANE", "SUE", "LEON", "KIP", "DOUG", "ZEKE", "JOSH", "JILL", "LYNN"};
 char *cities[]    = {"MEDINA, OH", "BILLINGS, MT", "SAN DIEGO", "WALLA WALLA, WA", "VERO BEACH, FL", "NASHVILLE, TN", "NYC", "CHICAGO", "LOS ANGELES", // 0-8
                     "POSSUM TROT, MS", "ASPEN, CO", "AUSTIN, TX", "RALIEGH, NC"};
@@ -162,12 +174,13 @@ int ditPeriod = 100;
 int ditPaddle = PADDLE_A;
 int dahPaddle = PADDLE_B;
 int pitch     = DEFAULTPITCH;
+bool paused   = false;
 
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
-char *menu0[]    = {" Letters ", " Numbers ", " Punc    ", " Words   ", " Let-Num ", "Call Sign", " QSO     ", " Exit    "};
-char *menu1[]    = {" Practice", " CopyCat ", "Flashcard", " Book    ", " Exit    "};
+char *menu0[]    = {" Letters ", " Words   ", " Book    ", " QSO     ", " Numbers ", " Punc    ", " Mixed   ", "Callsigns",  " Exit    "};
+char *menu1[]    = {" Practice", " CopyCat ", "Flashcard", " Exit    "};
 char *menu2[]    = {" Speed   ", "CharSpeed", " Chk Spd ", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
 
 //===================================  Rotary Encoder Code  =============================
@@ -362,6 +375,8 @@ void sendCharacter(char c) {                      // send a single ASCII charact
   if (c<32) return;                               // ignore control characters
   if (c>96) c -= 32;                              // convert lower case to upper case
   if (c>90) return;                               // not a character
+  checkForSpeedChange();                          // allow change in speed while sending
+  do checkPause(); while (paused);                // allow user to pause morse output
   addCharacter(c);                                // display character on LCD
   if (c==32) wordSpace();                         // space between words 
   else sendElements(morse[c-33]);                 // send the character
@@ -370,6 +385,45 @@ void sendCharacter(char c) {                      // send a single ASCII charact
 void sendString (char *ptr) {             
   while (*ptr)                                    // send the entire string
     sendCharacter(*ptr++);                        // one character at a time
+}
+
+void displayWPM ()
+{
+  const int x=290,y=200;
+  tft.fillRect(x,y,24,20,BLACK);
+  tft.setCursor(x,y);
+  tft.print(codeSpeed); 
+}
+
+void checkForSpeedChange()
+{
+  int dir = readEncoder();
+  if (dir!=0)
+  {
+    bool farnsworth=(codeSpeed!=charSpeed);
+    codeSpeed += dir;
+    if (codeSpeed<MINSPEED) 
+      codeSpeed=MINSPEED;
+    if (farnsworth)
+    {
+      if (codeSpeed>=charSpeed) 
+        codeSpeed=charSpeed-1;
+    } else {
+      if (codeSpeed>MAXSPEED) 
+        codeSpeed=MAXSPEED;
+      charSpeed = codeSpeed;      
+    }
+    displayWPM();
+    ditPeriod = intracharDit();
+  }  
+}
+
+void checkPause()
+{
+  if (dahPressed())                               // did user press "dah"?
+    paused = true;                                // yes, so pause output
+  if (ditPressed() || button_pressed)             // did user press "dit"?
+    paused = false;                               // yes, so resume output
 }
 
 //===================================  Receive Menu  ====================================
@@ -460,19 +514,13 @@ void sendPunctuation()
   }
 }
 
-void sendHamWords()                               // send some common ham words
-{ 
-  while (!button_pressed) {
-    int index=random(0, ELEMENTS(hamWords));      // eeny, meany, miney, moe
-    sendString(hamWords[index]);                  // send the word
-    sendCharacter(' ');                           // and a space between words
-  }
-}
 
-void sendCommonWords()
+void sendWords()
 { 
   while (!button_pressed) {
-    sendString(commonWords);                      // one long string of 100 words
+    int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
+    sendString(words[index]);                     // send the word
+    sendCharacter(' ');                           // and a space between words
   }
 }
 
@@ -509,18 +557,38 @@ void sendQSO()
   strcpy(temp,cities[random(0,ELEMENTS(cities))]);
   strcat(qso,temp);                               // add QTH
   strcat(qso,"= RIG HR IS ");
-  strcpy(temp,rigs[random(0,ELEMENTS(rigs))]);
-  strcat(qso,temp);                               // add rig
-  strcat(qso," ES ANT IS ");
-  strcat(qso,hamWords[random(9,12)]);             // add antenna
-  strcat(qso,"== WX HERE IS ");
-  strcat(qso,hamWords[random(14,21)]);            // add weather
+  strcpy(temp,rigs[random(0,ELEMENTS(rigs))]);    // add rig
+  strcat(qso,temp);                               
+  strcat(qso," ES ANT IS ");                      // add antenna
+  strcat(qso,antenna[random(0,ELEMENTS(antenna))]);             
+  strcat(qso,"== WX HERE IS ");                   // add weather
+  strcat(qso,weather[random(0,ELEMENTS(weather))]);     
   strcat(qso,"= SO HW CPY? ");                    // back to other ham
   strcat(qso,MYCALL);
   strcat(qso," de ");
   strcat(qso,otherCall);
   strcat(qso," KN");
   sendString(qso);                                // send entire QSO
+}
+
+void sendBook()
+{
+  const int pageSkip = 250;  
+  File book = SD.open("test.txt");                // look for book on sd card
+  if (book) {                                     // find it? 
+    while (book.available()) {                    // do for all characters in book:                
+      char ch = book.read();                      // get next character
+      sendCharacter(ch);                          // and send it
+      if (ch=='\r') sendCharacter(' ');           // treat CR as a space
+      if (ditPressed() && dahPressed())           // user wants to 'skip' ahead:
+      {
+        sendString("=  ");                        // acknowledge the skip with ~BT
+        for (int i=0; i<pageSkip; i++)
+          book.read();                            // skip a bunch of text!
+      }
+    }
+    book.close();                                 // close the file
+  } 
 }
 
 
@@ -638,38 +706,6 @@ void flashcards()
 }
 
 
-void sendBook()
-{
-  
-  File book = SD.open("test.txt");
-  if (book) {
-    while (book.available()) {
-      char ch = book.read();              // get next character
-      sendCharacter(ch);
-      int dir = readEncoder();
-      if (dir!=0)
-      {
-        codeSpeed += dir;
-        charSpeed += dir;
-        ditPeriod = intracharDit();
-      }
-      if (ch=='\r')                      // is it CR?
-      {
-        sendCharacter(' ');               // treat CR as a space
-        /*
-        ch = book.peek();
-        if ((ch=='\r') || (ch=='\n'))                      // is it CR?
-       {
-          book.read();                    // get rid of it
-         sendCharacter('=');             // treat it as paragraph marker
-         sendCharacter(' ');
-        } 
-       */    
-      }
-    }
-    book.close();
-  } 
-}
 
 
 
@@ -952,18 +988,18 @@ void initMorse()
 void initScreen()
 {
   tft.begin();                                    // initialize screen object
-  tft.setRotation(3);                             // landscape mode
+  tft.setRotation(3);                             // landscape mode: use '1' or '3'
   tft.fillScreen(BLACK);                          // start with blank screen
 }
 
-void splashScreen()
-{
+void splashScreen()                               // not splashy at all!
+{                                                 // have fun spucing it up.
   tft.setTextSize(3);
   tft.setTextColor(TEXTCOLOR,BLACK);
   tft.setCursor(50, 50);
-  tft.print("Morse Tutor");
-  delay(3000);
-  tft.fillScreen(BLACK);   
+  tft.print("Morse Tutor"); 
+  delay(2000);                                    // keep it on screen for a while
+  tft.fillScreen(BLACK);                          // then erase it.
 }
 
 void setup() 
@@ -985,16 +1021,18 @@ void loop()
   switch(selection)                               // do action requested by user
   {
     case 00: sendLetters(); break;
-    case 01: sendNumbers(); break;
-    case 02: sendPunctuation(); break;
-    case 03: sendCommonWords(); break;
-    case 04: sendMixedChars(); break;
-    case 05: sendCallsigns(); break;
-    case 06: sendQSO(); break;
+    case 01: sendWords(); break;
+    case 02: sendBook(); break;
+    case 03: sendQSO(); break;
+    case 04: sendNumbers(); break;
+    case 05: sendPunctuation(); break;
+    case 06: sendMixedChars(); break;
+    case 07: sendCallsigns(); break;
+
     case 10: receiveCode(); break;
     case 11: copyCallsigns(); break;
     case 12: flashcards(); break;
-    case 13: sendBook(); break;
+    
     case 20: setCodeSpeed(); break;
     case 21: setCharSpeed(); break;
     case 22: checkSpeed(); break;
