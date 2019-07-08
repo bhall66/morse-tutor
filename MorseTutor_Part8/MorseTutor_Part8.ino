@@ -9,8 +9,6 @@
  Description:   Part 8 of the tutorial at w8bh.net
                 Practice sending & receiving morse code
                 Inspired by Jack Purdum's "Morse Code Tutor"
-                
-                >> THIS VERSION UNDER DEVELOPMENT <<<
 
  **************************************************************************/
 
