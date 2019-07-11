@@ -1,51 +1,35 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   26 Jun 2019
-    Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 LCD,
+        Date:   07/09/2019
+    Hardware:   STM32F103C "Blue Pill", 
                 Adafruit #477 rotary encoder or similar
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
+       Legal:   Copyright (c) 2019  Bruce E. Hall.
+                Open Source under the terms of the MIT License. 
     
- Description:   Tests action of attached rotary encoder
+ Description:   Test your rotary encoder!
+                Turning encoder CW will send "short" flashes to LED
+                Turning encoder CCW will send "long" flashes to LED
+                Pressing the encoder button will double-flash the LED
    
  **************************************************************************/
 
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+#define LED               PC13                    // pin for onboard LED
 
+// The following defines specify which pins are attached to the rotary encoder
+// Make sure that each of these can be used as an external interrupt.
 
-#define ENCODER_A         PA8                     // Rotary Encoder output A
-#define ENCODER_B         PA9                     // Rotary Encoder output A
-#define ENCODER_BUTTON    PA4                     // Rotary Encoder switch
-#define TFT_DC            PA0
-#define TFT_CS            PA1
-#define TFT_RST           PA2
+#define ENCODER_A         PC15                    // Rotary Encoder output A
+#define ENCODER_B         PC14                    // Rotary Encoder output A
+#define ENCODER_BUTTON    PB9                     // Rotary Encoder switch
 
+#define SHORTFLASH        100                     // duration in mS of short LED flash
+#define LONGFLASH         300                     // duration in mS of long LED flash
 
-//===================================  Color Constants ==================================
-#define BLACK          0x0000
-#define BLUE           0x001F
-#define RED            0xF800
-#define GREEN          0x07E0
-#define CYAN           0x07FF
-#define MAGENTA        0xF81F
-#define YELLOW         0xFFE0
-#define WHITE          0xFFFF
-#define DKGREEN        0x03E0
-
-// ==================================  Display Constants =================================
-#define DISPLAYWIDTH      320                     // Number of LCD pixels in long-axis
-#define DISPLAYHEIGHT     240                     // Number of LCD pixels in short-axis
-#define TEXTCOLOR      YELLOW                     // Default non-menu text color
-
-//===================================  Rotary Encoder Variables =========================
-volatile int      rotaryCounter   = 0;           // "position" of rotary encoder (increments CW) 
-volatile int      rotaryCW        = 0;           //  number of CW rotations
-volatile int      rotaryCCW       = 0;           //  number of CCW rotations
-volatile int      rotaryInvalid   = 0;           //  number of invalid transitions
-volatile int      rotaryTicks     = 0;           //  total number of times ISR called
-volatile byte     transition      = 0;           //  current transition state              
-
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+volatile int      rotaryCounter    = 0;           // "position" of rotary encoder (increments CW) 
+volatile boolean  button_pressed   = false;       // true if the button has been pushed
+volatile boolean  button_released  = false;       // true if the button has been released (sets button_downtime)
+volatile long     button_downtime  = 0L;          // ms the button was pushed before released         
 
 /* 
    Rotary Encoder Interrupt Service Routine ---------------
@@ -60,55 +44,97 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
  
 void rotaryISR()
 {
-  const int states[] = {0,1,-1,0,-1,0,0,1,1,0,0,-1,0,-1,1,0}; 
-
+  const int states[] = {0,1,-1,0,-1,0,0,1,1,0,0,-1,0,-1,1,0};
+  static byte transition = 0;                     // holds current and previous encoder states 
   transition <<= 2;                               // shift previous state up 2 bits
   transition |= (digitalRead(ENCODER_A));         // put encoder_A on bit 0
   transition |= (digitalRead(ENCODER_B) << 1);    // put encoder_B on bit 1
-  transition &= 0x0F;                             // zero upper 4 bits
+  transition &= 0x0F;                             // zero upper 4 bits                 
+  rotaryCounter += states[transition];            // update rotary counter +/- 1
+}
 
-  int change = states[transition];                // map transition to CW vs CCW rotation
-  if (change==0) rotaryInvalid++;
-  if (change<0)  rotaryCCW++;
-  if (change>0)  rotaryCW++;
-  if (change!=0)                                  // if transition is valid,                      
-    rotaryCounter += change;                      // update rotary counter +/- 1
+/* 
+   Rotary Encoder Button Interrupt Service Routine ----------
+   Process encoder button presses and releases, including debouncing (extra "presses" from 
+   noisy switch contacts). If button is pressed, the button_pressed flag is set to true. If 
+   button is released, the button_released flag is set to true, and button_downtime will 
+   contain the duration of the button press in ms.  Manually reset flags after handling event. 
+*/
+
+void buttonISR()
+{  
+  static boolean button_state = false;
+  static unsigned long start, end;  
+  boolean pinState = digitalRead(ENCODER_BUTTON);
+  
+  if ((pinState==LOW) && (button_state==false))                     
+  {                                               // Button was up, but is now down
+    start = millis();                             // mark time of button down
+    if (start > (end + 10))                       // was button up for 10mS?
+    {
+      button_state = true;                        // yes, so change state
+      button_pressed = true;
+    }
+  }
+  else if ((pinState==HIGH) && (button_state==true))                       
+  {                                               // Button was down, but now up
+    end = millis();                               // mark time of release
+    if (end > (start + 10))                       // was button down for 10mS?
+    {
+      button_state = false;                       // yes, so change state
+      button_released = true;
+      button_downtime = end - start;              // and record how long button was down
+    }
+  }
+}
+
+/* 
+   readEncoder() returns 0 if no significant encoder movement since last call,
+   +1 if clockwise rotation, and -1 for counter-clockwise rotation
+*/
+
+int readEncoder(int numTicks = 3) 
+{
+  static int prevCounter = 0;                     // holds last encoder position
+  int change = rotaryCounter - prevCounter;       // how many ticks since last call?
+  if (abs(change)<=numTicks)                      // not enough ticks?
+    return 0;                                     // so exit with a 0.
+  prevCounter = rotaryCounter;                    // enough clicks, so save current counter values
+  return (change>0) ? 1:-1;                       // return +1 for CW rotation, -1 for CCW    
 }
 
 void initEncoder()
 {
   pinMode(ENCODER_A, INPUT_PULLUP);
-  pinMode(ENCODER_B, INPUT_PULLUP);  
+  pinMode(ENCODER_B, INPUT_PULLUP); 
+  pinMode(ENCODER_BUTTON, INPUT_PULLUP); 
   attachInterrupt(digitalPinToInterrupt(ENCODER_A),rotaryISR,CHANGE); 
   attachInterrupt(digitalPinToInterrupt(ENCODER_B),rotaryISR,CHANGE); 
+  attachInterrupt(digitalPinToInterrupt(ENCODER_BUTTON),buttonISR,CHANGE);
+}
+
+void flashLED(int duration)
+{
+  digitalWrite(LED,LOW);                          // turn on LED
+  delay(duration);
+  digitalWrite(LED,HIGH);                         // turn off LED
+  delay(duration);
 }
 
 void setup() {
-  initEncoder();
-  tft.begin();                                    // initialize screen object
-  tft.setRotation(1);                             // landscape mode
-  tft.setTextSize(3);                             // small text but readable
-  tft.setTextColor(YELLOW,BLACK);
-  tft.fillScreen(BLACK);                          // start with blank screen
+  initEncoder();                                  // set up encoder interrupt pins
+  pinMode(LED,OUTPUT);                            // set up onboard LED
+  digitalWrite(LED,HIGH);                         // and make sure its OFF
 }
 
-void loop() {                              
-
-  //tft.setCursor(0,50);     tft.print("Trans:"); 
-  //tft.setCursor(130,50);   tft.print(transition,BIN);
-
-  tft.setCursor(0,75);     tft.print("Count:"); 
-  tft.setCursor(130,75);   tft.print(rotaryCounter);
-
-  tft.setCursor(0,100);    tft.print("CW:"); 
-  tft.setCursor(130,100);  tft.print(rotaryCW); 
-  
-  tft.setCursor(0,125);    tft.print("CCW:"); 
-  tft.setCursor(130,125);  tft.print(rotaryCCW);
-
-  tft.setCursor(0,150);    tft.print("Bad:"); 
-  tft.setCursor(130,150);  tft.print(rotaryInvalid);  
-  
-  delay(1000);
-  tft.fillRect(0,75,200,175,BLACK);
+void loop() { 
+  if (button_pressed)                             // was encoder button pressed?
+  {
+    flashLED(80);                                 // yes, so 2 quick flashes
+    flashLED(80);
+    button_pressed = false;                       // and reset flag
+  }
+  int i=readEncoder();                            // was encoder knob turned?
+  if (i>0) flashLED(SHORTFLASH);                  // yes (CW) so give a short flash
+  if (i<0) flashLED(LONGFLASH);                   // yes (CCW) so give a long flash          
 }

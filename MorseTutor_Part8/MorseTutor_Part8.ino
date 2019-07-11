@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   07 Jul 2019
+        Date:   10 Jul 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -75,8 +75,7 @@
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 //===================================  Rotary Encoder Variables =========================
-volatile int      rotary_counter   = 0;           // "position" of rotary encoder (increments CW) 
-volatile boolean  rotary_changed   = false;       // true if rotary_counter has changed
+volatile int      rotaryCounter    = 0;           // "position" of rotary encoder (increments CW) 
 volatile boolean  button_pressed   = false;       // true if the button has been pushed
 volatile boolean  button_released  = false;       // true if the button has been released (sets button_downtime)
 volatile long     button_downtime  = 0L;          // ms the button was pushed before released
@@ -235,19 +234,12 @@ void buttonISR()
 void rotaryISR()
 {
   const int states[] = {0,1,-1,0,-1,0,0,1,1,0,0,-1,0,-1,1,0};
-  static byte rotary_state = 0;                   // holds current and previous encoder states   
-
-  rotary_state <<= 2;                             // shift previous state up 2 bits
-  rotary_state |= (digitalRead(ENCODER_A));       // put encoder_A on bit 0
-  rotary_state |= (digitalRead(ENCODER_B) << 1);  // put encoder_B on bit 1
-  rotary_state &= 0x0F;                           // zero upper 4 bits
-
-  int change = states[rotary_state];              // map transition to CW vs CCW rotation
-  if (change!=0)                                  // make sure transition is valid
-  {
-    rotary_changed = true;                          
-    rotary_counter += change;                     // update rotary counter +/- 1
-  }
+  static byte transition = 0;                     // holds current and previous encoder states   
+  transition <<= 2;                               // shift previous state up 2 bits
+  transition |= (digitalRead(ENCODER_A));         // put encoder_A on bit 0
+  transition |= (digitalRead(ENCODER_B) << 1);    // put encoder_B on bit 1
+  transition &= 0x0F;                             // zero upper 4 bits
+  rotaryCounter += states[transition];            // update counter +/- 1 based on rotation
 }
 
 boolean buttonDown()                              // check CURRENT state of button
@@ -281,11 +273,10 @@ void waitForButtonPress()
 int readEncoder(int numTicks = ENCODER_TICKS) 
 {
   static int prevCounter = 0;                     // holds last encoder position
-  rotary_changed = false;                         // Clear flag
-  int change = rotary_counter - prevCounter;      // how many ticks since last call?
+  int change = rotaryCounter - prevCounter;       // how many ticks since last call?
   if (abs(change)<=numTicks)                      // not enough ticks?
     return 0;                                     // so exit with a 0.
-  prevCounter = rotary_counter;                   // enough clicks, so save current counter values
+  prevCounter = rotaryCounter;                    // enough clicks, so save current counter values
   return (change>0) ? 1:-1;                       // return +1 for CW rotation, -1 for CCW    
 }
 

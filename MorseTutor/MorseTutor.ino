@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   07 Jul 2019
+        Date:   10 Jul 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -76,8 +76,7 @@
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 //===================================  Rotary Encoder Variables =========================
-volatile int      rotary_counter   = 0;           // "position" of rotary encoder (increments CW) 
-volatile boolean  rotary_changed   = false;       // true if rotary_counter has changed
+volatile int      rotaryCounter    = 0;           // "position" of rotary encoder (increments CW) 
 volatile boolean  button_pressed   = false;       // true if the button has been pushed
 volatile boolean  button_released  = false;       // true if the button has been released (sets button_downtime)
 volatile long     button_downtime  = 0L;          // ms the button was pushed before released
@@ -89,16 +88,16 @@ volatile long     button_downtime  = 0L;          // ms the button was pushed be
                     // from The Brown Corpus Standard Sample of Present-Day American English 
                     // (Providence, RI: Brown University Press, 1979)
                     
-char *words[]     = {"the", "of", "and", "to", "a", "in", "that", "is", "was", "he", 
-                     "for", "it", "with", "as", "his", "on", "be", "at", "by", "I", 
-                     "this", "had", "not", "are", "but", "from", "or", "have", "an", "they", 
-                     "which", "one", "you", "were", "all", "her", "she", "there", "would", "their", 
-                     "we", "him", "been", "has", "when", "who", "will", "no", "more", "if", 
-                     "out", "so", "up", "said", "what", "its", "about", "than", "into", "them", 
-                     "can", "only", "other", "time", "new", "some", "could", "these", "two", "may", 
-                     "first", "then", "do", "any", "like", "my", "now", "over", "such", "our", 
-                     "man", "me", "even", "most", "made", "after", "also", "did", "many", "off", 
-                     "before", "must", "well", "back", "through", "years", "much", "where", "your", "way"  
+char *words[]     = {"THE", "OF", "AND", "TO", "A", "IN", "THAT", "IS", "WAS", "HE", 
+                     "FOR", "IT", "WITH", "AS", "HIS", "ON", "BE", "AT", "BY", "I", 
+                     "THIS", "HAD", "NOT", "ARE", "BUT", "FROM", "OR", "HAVE", "AN", "THEY", 
+                     "WHICH", "ONE", "YOU", "WERE", "ALL", "HER", "SHE", "THERE", "WOULD", "THEIR", 
+                     "WE", "HIM", "BEEN", "HAS", "WHEN", "WHO", "WILL", "NO", "MORE", "IF", 
+                     "OUT", "SO", "UP", "SAID", "WHAT", "ITS", "ABOUT", "THAN", "INTO", "THEM", 
+                     "CAN", "ONLY", "OTHER", "TIME", "NEW", "SOME", "COULD", "THESE", "TWO", "MAY", 
+                     "FIRST", "THEN", "DO", "ANY", "LIKE", "MY", "NOW", "OVER", "SUCH", "OUR", 
+                     "MAN", "ME", "EVEN", "MOST", "MADE", "AFTER", "ALSO", "DID", "MANY", "OFF", 
+                     "BEFORE", "MUST", "WELL", "BACK", "THROUGH", "YEARS", "MUCH", "WHERE", "YOUR", "WAY"  
                     };
 char *antenna[]   = {"DIPOLE", "VERTICAL", "BEAM"};
 char *weather[]   = {"WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY"};
@@ -181,7 +180,7 @@ bool paused   = false;
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
 char *menu0[]    = {" Letters ", " Words   ", " Book    ", " QSO     ", " Numbers ", " Punc    ", " Mixed   ", "Callsigns",  " Exit    "};
-char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Call", "Flashcard", " Exit    "};
+char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", "Flashcard", " Exit    "};
 char *menu2[]    = {" Speed   ", "CharSpeed", "Chk Speed", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
 
 //===================================  Rotary Encoder Code  =============================
@@ -236,19 +235,12 @@ void buttonISR()
 void rotaryISR()
 {
   const int states[] = {0,1,-1,0,-1,0,0,1,1,0,0,-1,0,-1,1,0};
-  static byte rotary_state = 0;                   // holds current and previous encoder states   
-
-  rotary_state <<= 2;                             // shift previous state up 2 bits
-  rotary_state |= (digitalRead(ENCODER_A));       // put encoder_A on bit 0
-  rotary_state |= (digitalRead(ENCODER_B) << 1);  // put encoder_B on bit 1
-  rotary_state &= 0x0F;                           // zero upper 4 bits
-
-  int change = states[rotary_state];              // map transition to CW vs CCW rotation
-  if (change!=0)                                  // make sure transition is valid
-  {
-    rotary_changed = true;                          
-    rotary_counter += change;                     // update rotary counter +/- 1
-  }
+  static byte transition = 0;                     // holds current and previous encoder states   
+  transition <<= 2;                               // shift previous state up 2 bits
+  transition |= (digitalRead(ENCODER_A));         // put encoder_A on bit 0
+  transition |= (digitalRead(ENCODER_B) << 1);    // put encoder_B on bit 1
+  transition &= 0x0F;                             // zero upper 4 bits
+  rotaryCounter += states[transition];            // update counter +/- 1 based on rotation
 }
 
 boolean buttonDown()                              // check CURRENT state of button
@@ -282,12 +274,11 @@ void waitForButtonPress()
 int readEncoder(int numTicks = ENCODER_TICKS) 
 {
   static int prevCounter = 0;                     // holds last encoder position
-  rotary_changed = false;                         // Clear flag
-  int change = rotary_counter - prevCounter;      // how many ticks since last call?
+  int change = rotaryCounter - prevCounter;       // how many ticks since last call?
   if (abs(change)<=numTicks)                      // not enough ticks?
     return 0;                                     // so exit with a 0.
-  prevCounter = rotary_counter;                   // enough clicks, so save current counter values
-  return (change>0) ? 1:-1;                       // return +1 for CW rotation, -1 for CCW    
+  prevCounter = rotaryCounter;                    // enough clicks, so save current counter values
+  return (change>0) ? 1:-1;                       // return +1 for CW rotation, -1 for CCW   
 }
 
 
@@ -376,11 +367,13 @@ void sendCharacter(char c) {                      // send a single ASCII charact
   if (c<32) return;                               // ignore control characters
   if (c>96) c -= 32;                              // convert lower case to upper case
   if (c>90) return;                               // not a character
-  checkForSpeedChange();                          // allow change in speed while sending
-  do checkPause(); while (paused);                // allow user to pause morse output
   addCharacter(c);                                // display character on LCD
   if (c==32) wordSpace();                         // space between words 
   else sendElements(morse[c-33]);                 // send the character
+  checkForSpeedChange();                          // allow change in speed while sending
+  do 
+    checkPause(); 
+  while (paused);                                 // allow user to pause morse output
 }
 
 void sendString (char *ptr) {             
@@ -433,7 +426,7 @@ void checkPause()
 void addChar (char* str, char ch)                 // adds 1 character to end of string
 {                                            
   char c[2] = " ";                                // happy hacking: char into string
-  c[0] = ch;                                      // change char'A' to string"A"
+  c[0] = ch;                                      // change char 'A' to string "A"
   strcat(str,c);                                  // and add it to end of string
 }
 
@@ -695,6 +688,17 @@ void copyTwoChars()
   }
 }
 
+void copyWords()                                  // show a callsign & see if user can copy it
+{
+  char text[10];
+  while (!button_pressed)                      
+  { 
+    int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
+    strcpy(text,words[index]);                    // pick a random word       
+    mimick(text);                                 // and ask user to copy it
+  }
+}
+
 void mimick(char *text)
 {
   const int x=200,y=50,wd=105,ht=80;              // posn & size of score card
@@ -710,7 +714,7 @@ void mimick(char *text)
     ch = receivedChar();                          // get a character
     if (ch!=' ') addChar(response,ch);            // add it to the response
     addCharacter(ch);                             // and put it on screen
-  } while (ch!=' ');                              // space = word timeout 
+  } while (ch!=' ');                              // space = word timeout
   if (!strcmp(text,response))                     // did user match the text?
   {                                               // Yes! So show score card
     tft.setCursor(x+15,y+20);
@@ -1081,8 +1085,9 @@ void loop()
     case 10: receiveCode(); break;
     case 11: copyCharacters(); break;
     case 12: copyTwoChars(); break;
-    case 13: copyCallsigns(); break;
-    case 14: flashcards(); break;
+    case 13: copyWords(); break;
+    case 14: copyCallsigns(); break;
+    case 15: flashcards(); break;
     
     case 20: setCodeSpeed(); break;
     case 21: setCharSpeed(); break;
