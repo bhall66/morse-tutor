@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   10 Jul 2019
+        Date:   12 Jul 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -87,22 +87,22 @@ volatile long     button_downtime  = 0L;          // ms the button was pushed be
                     // from The Brown Corpus Standard Sample of Present-Day American English 
                     // (Providence, RI: Brown University Press, 1979)
                     
-char *words[]     = {"the", "of", "and", "to", "a", "in", "that", "is", "was", "he", 
-                     "for", "it", "with", "as", "his", "on", "be", "at", "by", "I", 
-                     "this", "had", "not", "are", "but", "from", "or", "have", "an", "they", 
-                     "which", "one", "you", "were", "all", "her", "she", "there", "would", "their", 
-                     "we", "him", "been", "has", "when", "who", "will", "no", "more", "if", 
-                     "out", "so", "up", "said", "what", "its", "about", "than", "into", "them", 
-                     "can", "only", "other", "time", "new", "some", "could", "these", "two", "may", 
-                     "first", "then", "do", "any", "like", "my", "now", "over", "such", "our", 
-                     "man", "me", "even", "most", "made", "after", "also", "did", "many", "off", 
-                     "before", "must", "well", "back", "through", "years", "much", "where", "your", "way"  
+char *words[]     = {"THE", "OF", "AND", "TO", "A", "IN", "THAT", "IS", "WAS", "HE", 
+                     "FOR", "IT", "WITH", "AS", "HIS", "ON", "BE", "AT", "BY", "I", 
+                     "THIS", "HAD", "NOT", "ARE", "BUT", "FROM", "OR", "HAVE", "AN", "THEY", 
+                     "WHICH", "ONE", "YOU", "WERE", "ALL", "HER", "SHE", "THERE", "WOULD", "THEIR", 
+                     "WE", "HIM", "BEEN", "HAS", "WHEN", "WHO", "WILL", "NO", "MORE", "IF", 
+                     "OUT", "SO", "UP", "SAID", "WHAT", "ITS", "ABOUT", "THAN", "INTO", "THEM", 
+                     "CAN", "ONLY", "OTHER", "TIME", "NEW", "SOME", "COULD", "THESE", "TWO", "MAY", 
+                     "FIRST", "THEN", "DO", "ANY", "LIKE", "MY", "NOW", "OVER", "SUCH", "OUR", 
+                     "MAN", "ME", "EVEN", "MOST", "MADE", "AFTER", "ALSO", "DID", "MANY", "OFF", 
+                     "BEFORE", "MUST", "WELL", "BACK", "THROUGH", "YEARS", "MUCH", "WHERE", "YOUR", "WAY"  
                     };
 char *antenna[]   = {"DIPOLE", "VERTICAL", "BEAM"};
 char *weather[]   = {"WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY"};
 char *names[]     = {"FRED", "JOHN", "TERRY", "JANE", "SUE", "LEON", "KIP", "DOUG", "ZEKE", "JOSH", "JILL", "LYNN"};
 char *cities[]    = {"MEDINA, OH", "BILLINGS, MT", "SAN DIEGO", "WALLA WALLA, WA", "VERO BEACH, FL", "NASHVILLE, TN", "NYC", "CHICAGO", "LOS ANGELES", // 0-8
-                    "POSSUM TROT, MS", "ASPEN, CO", "AUSTIN, TX", "RALIEGH, NC"};
+                    "POSSUM TROT, MS", "ASPEN, CO", "AUSTIN, TX", "RALEIGH, NC"};
 char *rigs[]      = {"YAESU FT101", "KENWOOD 780", "ELECRAFT K3", "HOMEBREW", "QRPLABS QCX", "ICOM 7410", "FLEX 6400"};
 char punctuation[]= "!@$&()-+=,.:;'/";
 char prefix[]     = {'A', 'W', 'K', 'N'};
@@ -179,7 +179,7 @@ bool paused   = false;
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
 char *menu0[]    = {" Letters ", " Words   ", " Book    ", " QSO     ", " Numbers ", " Punc    ", " Mixed   ", "Callsigns",  " Exit    "};
-char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Call", "Flashcard", " Exit    "};
+char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", "Flashcard", " Exit    "};
 char *menu2[]    = {" Speed   ", "CharSpeed", "Chk Speed", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
 
 //===================================  Rotary Encoder Code  =============================
@@ -277,7 +277,7 @@ int readEncoder(int numTicks = ENCODER_TICKS)
   if (abs(change)<=numTicks)                      // not enough ticks?
     return 0;                                     // so exit with a 0.
   prevCounter = rotaryCounter;                    // enough clicks, so save current counter values
-  return (change>0) ? 1:-1;                       // return +1 for CW rotation, -1 for CCW    
+  return (change>0) ? 1:-1;                       // return +1 for CW rotation, -1 for CCW   
 }
 
 
@@ -366,11 +366,13 @@ void sendCharacter(char c) {                      // send a single ASCII charact
   if (c<32) return;                               // ignore control characters
   if (c>96) c -= 32;                              // convert lower case to upper case
   if (c>90) return;                               // not a character
-  checkForSpeedChange();                          // allow change in speed while sending
-  do checkPause(); while (paused);                // allow user to pause morse output
   addCharacter(c);                                // display character on LCD
   if (c==32) wordSpace();                         // space between words 
   else sendElements(morse[c-33]);                 // send the character
+  checkForSpeedChange();                          // allow change in speed while sending
+  do 
+    checkPause(); 
+  while (paused);                                 // allow user to pause morse output
 }
 
 void sendString (char *ptr) {             
@@ -423,7 +425,7 @@ void checkPause()
 void addChar (char* str, char ch)                 // adds 1 character to end of string
 {                                            
   char c[2] = " ";                                // happy hacking: char into string
-  c[0] = ch;                                      // change char'A' to string"A"
+  c[0] = ch;                                      // change char 'A' to string "A"
   strcat(str,c);                                  // and add it to end of string
 }
 
@@ -685,6 +687,17 @@ void copyTwoChars()
   }
 }
 
+void copyWords()                                  // show a callsign & see if user can copy it
+{
+  char text[10];
+  while (!button_pressed)                      
+  { 
+    int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
+    strcpy(text,words[index]);                    // pick a random word       
+    mimick(text);                                 // and ask user to copy it
+  }
+}
+
 void mimick(char *text)
 {
   const int x=200,y=50,wd=105,ht=80;              // posn & size of score card
@@ -700,7 +713,7 @@ void mimick(char *text)
     ch = receivedChar();                          // get a character
     if (ch!=' ') addChar(response,ch);            // add it to the response
     addCharacter(ch);                             // and put it on screen
-  } while (ch!=' ');                              // space = word timeout 
+  } while (ch!=' ');                              // space = word timeout
   if (!strcmp(text,response))                     // did user match the text?
   {                                               // Yes! So show score card
     tft.setCursor(x+15,y+20);
@@ -789,9 +802,9 @@ void setCodeSpeed()
     {
       codeSpeed += dir;                           // ...so change speed up/down          
       if (codeSpeed<MINSPEED) 
-		    codeSpeed = MINSPEED;                     // dont go below minimum
+        codeSpeed = MINSPEED;                     // dont go below minimum
       if (codeSpeed>MAXSPEED) 
-		    codeSpeed = MAXSPEED;                     // dont go above maximum
+        codeSpeed = MAXSPEED;                     // dont go above maximum
       tft.fillRect(x,y,50,50,BLACK);              // erase old speed
       tft.setCursor(x,y);
       tft.print(codeSpeed);                       // and show new speed    
@@ -818,9 +831,9 @@ void setCharSpeed()
     {
       charSpeed += dir;                           // ...so change speed up/down 
       if (charSpeed<MINSPEED) 
-		    charSpeed = MINSPEED;                     // dont go below minimum
+        charSpeed = MINSPEED;                     // dont go below minimum
       if (charSpeed>MAXSPEED) 
-		    charSpeed = MAXSPEED;                     // dont go above maximum
+        charSpeed = MAXSPEED;                     // dont go above maximum
       tft.fillRect(x,y,50,50,BLACK);              // erase old speed
       tft.setCursor(x,y);
       tft.print(charSpeed);                       // and show new speed 
@@ -950,12 +963,12 @@ int topMenu(char *menu[], int itemCount)          // Display a horiz menu & retu
     int dir = readEncoder();                      // check encoder
     if (dir) {                                    // did it move?
       showMenuItem(menu[index],index*MENUSPACING,
-	    0, FG,BG);                                  // deselect current item
+      0, FG,BG);                                  // deselect current item
       index += dir;                               // go to next/prev item
       if (index > itemCount-1) index=0;           // dont go beyond last item
       if (index < 0) index = itemCount-1;         // dont go before first item
       showMenuItem(menu[index],index*MENUSPACING,
-	    0, SELECTFG,SELECTBG);                      // select new item         
+      0, SELECTFG,SELECTBG);                      // select new item         
     }  
   }
   return index;  
@@ -987,7 +1000,7 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
       if (index < 0) index = itemCount-1;         // dont go before first item
        y = TOPDEADSPACE + index*ROWSPACING;       // calc y-coord of new item
       showMenuItem(menu[index],x,y,
-	    SELECTFG,SELECTBG);                         // select new item
+      SELECTFG,SELECTBG);                         // select new item
     }
   }
   return index;  
@@ -1071,8 +1084,9 @@ void loop()
     case 10: receiveCode(); break;
     case 11: copyCharacters(); break;
     case 12: copyTwoChars(); break;
-    case 13: copyCallsigns(); break;
-    case 14: flashcards(); break;
+    case 13: copyWords(); break;
+    case 14: copyCallsigns(); break;
+    case 15: flashcards(); break;
     
     case 20: setCodeSpeed(); break;
     case 21: setCharSpeed(); break;
