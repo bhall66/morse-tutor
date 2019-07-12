@@ -33,7 +33,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 void setup() {
   tft.begin();                                    // initialize screen object
-  tft.setRotation(1);                             // landscape mode
+  tft.setRotation(3);                             // landscape mode: use '1' or '3'
   tft.fillScreen(BLACK);                          // start with blank screen
   tft.setTextSize(3);                             // medium size font
   tft.setTextColor(YELLOW,BLACK);
