@@ -1,12 +1,12 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   29 Jun 2019
+        Date:   211 Jul 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
- Description:   Part 7 (final) of the tutorial at w8bh.net
+ Description:   Part 7 of the tutorial at w8bh.net
                 Practice sending & receiving morse code
                 Inspired by Jack Purdum's "Morse Code Tutor"
    
@@ -18,6 +18,18 @@
 #include "Adafruit_ILI9341.h"
 #include "EEPROM.h"
 
+//===================================  Hardware Connections =============================
+#define TFT_DC            PA0                     // LCD "DC" pin
+#define TFT_CS            PA1                     // LCD "CS" pin
+#define TFT_RST           PA2                     // LCD "RST" pin
+#define ENCODER_A        PC15                     // Rotary Encoder output A
+#define ENCODER_B        PC14                     // Rotary Encoder output B
+#define LED              PC13                     // onboard LED pin
+#define ENCODER_BUTTON    PB9                     // Rotary Encoder switch
+#define PADDLE_A         PB14                     // Morse Paddle "dit"
+#define PADDLE_B         PB13                     // Morse Paddle "dah"
+#define PIEZO            PB12                     // pin attached to piezo element
+
 //===================================  Morse Code Constants =============================
 #define MYCALL          "W8BH"
 #define DEFAULTSPEED       13                     // character speed in Words per Minute
@@ -26,24 +38,9 @@
 #define DEFAULTPITCH     1200                     // default pitch in Hz of morse audio
 #define MAXPITCH         2800                     // highest allowed pitch
 #define MINPITCH          300                     // how low can you go
-#define LED              PC13                     // onboard LED pin
-#define PIEZO             PB0                     // pin attached to piezo element
 #define WORDSIZE            5                     // number of chars per random word
 #define FLASHCARDDELAY   2000                     // wait in mS between cards
-
-//===================================  LCD Display Constants ============================
-#define TFT_DC            PA0
-#define TFT_CS            PA1
-#define TFT_RST           PA2
-
-//===================================  Encoder/Paddle Constants =========================
-#define SPEAKER           PB0                     // Piezo/Speaker pin
-#define ENCODER_A         PA8                     // Rotary Encoder output A
-#define ENCODER_B         PA9                     // Rotary Encoder output B
-#define ENCODER_BUTTON    PA4                     // Rotary Encoder switch
 #define ENCODER_TICKS       3                     // Ticks required to register movement
-#define PADDLE_A          PB7                     // Morse Paddle "dit"
-#define PADDLE_B          PB8                     // Morse Paddle "dah"
 
 //===================================  Color Constants ==================================
 #define BLACK          0x0000
@@ -914,18 +911,25 @@ void initMorse()
 void initScreen()
 {
   tft.begin();                                    // initialize screen object
-  tft.setRotation(1);                             // landscape mode
+  tft.setRotation(3);                             // landscape mode: use '1' or '3'
   tft.fillScreen(BLACK);                          // start with blank screen
 }
 
-void splashScreen()
-{
+void splashScreen()                               // not splashy at all!
+{                                                 // have fun sprucing it up.
   tft.setTextSize(3);
-  tft.setTextColor(TEXTCOLOR,BLACK);
-  tft.setCursor(50, 50);
-  tft.print("Morse Madness");
-  delay(3000);
-  tft.fillScreen(BLACK);   
+  tft.setTextColor(TEXTCOLOR);
+  tft.setCursor(100, 50); 
+  tft.print(MYCALL);                              // add your callsign (set MYCALL at top of sketch)
+  tft.setTextColor(CYAN);
+  tft.setCursor(15, 90);      
+  tft.print("Morse Code Tutor");                  // add title
+  tft.setTextSize(1);
+  tft.setCursor(50,220);
+  tft.setTextColor(WHITE);
+  tft.print("Copyright (c) 2019, Bruce E. Hall"); // legal small print
+  delay(2000);                                    // keep it on screen for a while
+  tft.fillScreen(BLACK);                          // then erase it.
 }
 
 void setup() 

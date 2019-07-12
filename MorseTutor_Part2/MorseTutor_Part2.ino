@@ -1,6 +1,6 @@
 /**************************************************************************
     Author:    Bruce E. Hall, w8bh.net
-    Date:      25 Jun 2019
+    Date:      11 Jul 2019
     Hardware:  STM32F103C "Blue Pill" with Piezo Buzzer
       Legal:   Copyright (c) 2019  Bruce E. Hall.
                Open Source under the terms of the MIT License. 
@@ -10,11 +10,14 @@
                Algorithm can be modified for memory keyers, etc.
  **************************************************************************/
 
+//===================================  Hardware Connections =============================
+#define LED              PC13                     // onboard LED pin
+#define PIEZO            PB12                     // pin attached to piezo element
+
+//===================================  Morse Code Constants =============================
 #define CODESPEED   13                            // speed in Words per Minute
 #define DITPERIOD   1200/CODESPEED
 #define PITCH       1200                          // pitch in Hz of morse audio
-#define LED         PC13                          // onboard LED pin
-#define PIEZO       PB0                           // pin attached to piezo element
 
 
 char *greetings = "CQ DE W8BH";                   // demo code to send

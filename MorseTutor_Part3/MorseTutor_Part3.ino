@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   26 Jun 2019
+        Date:   11 Jul 2019
     Hardware:   STM32F103C "Blue Pill" with Piezo Buzzer
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -13,14 +13,17 @@
    
  **************************************************************************/
 
+//===================================  Hardware Connections =============================
+#define LED              PC13                     // onboard LED pin
+#define PADDLE_A         PB14                     // Morse Paddle "dit"
+#define PADDLE_B         PB13                     // Morse Paddle "dah"
+#define PIEZO            PB12                     // pin attached to piezo element
+
+//===================================  Morse Code Constants =============================
 #define CODESPEED   13                       // speed in Words per Minute
 #define PITCH       1200                     // pitch in Hz of morse audio
-#define LED         PC13                     // onboard LED pin
-#define PIEZO       PB0                      // pin attached to piezo element
 #define DITPERIOD   1200/CODESPEED           // period of dit, in milliseconds
 #define WORDSIZE    5                        // number of chars per random word
-#define PADDLE_A    PB7                      // Morse Paddle "dit"
-#define PADDLE_B    PB8                      // Morse Paddle "dah"
 #define ELEMENTS(x) (sizeof(x) / sizeof(x[0]))
 
 char *greetings   = "Greetings de W8BH = Name is Bruce = +";

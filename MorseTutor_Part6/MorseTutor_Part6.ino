@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   26 Jun 2019
+        Date:   11 Jul 2019
     Hardware:   STM32F103C "Blue Pill", Piezo Buzzer, 2.2" ILI9341 LCD,
                 Adafruit #477 rotary encoder or similar
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
@@ -13,24 +13,28 @@
    
  **************************************************************************/
 
+//===================================  INCLUDES ========================================= 
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 
+//===================================  Hardware Connections =============================
+#define TFT_DC            PA0                     // LCD "DC" pin
+#define TFT_CS            PA1                     // LCD "CS" pin
+#define TFT_RST           PA2                     // LCD "RST" pin
+#define ENCODER_A        PC15                     // Rotary Encoder output A
+#define ENCODER_B        PC14                     // Rotary Encoder output B
+#define LED              PC13                     // onboard LED pin
+#define ENCODER_BUTTON    PB9                     // Rotary Encoder switch
+#define PADDLE_A         PB14                     // Morse Paddle "dit"
+#define PADDLE_B         PB13                     // Morse Paddle "dah"
+#define PIEZO            PB12                     // pin attached to piezo element
+
+//===================================  Morse Code Constants =============================
 #define CODESPEED          13                     // speed in Words per Minute
 #define PITCH            1200                     // pitch in Hz of morse audio
-#define LED              PC13                     // onboard LED pin
-#define PIEZO             PB0                     // pin attached to piezo element
 #define DITPERIOD   1200/CODESPEED                // period of dit, in milliseconds
 #define WORDSIZE            5                     // number of chars per random word
-#define PADDLE_A          PB7                     // Morse Paddle "dit"
-#define PADDLE_B          PB8                     // Morse Paddle "dah"
-#define ENCODER_A         PA8                     // Rotary Encoder output A
-#define ENCODER_B         PA9                     // Rotary Encoder output B
-#define ENCODER_BUTTON    PA4                     // Rotary Encoder switch
 #define ENCODER_TICKS       3                     // Ticks required to register movement
-#define TFT_DC            PA0
-#define TFT_CS            PA1
-#define TFT_RST           PA2
 
 //===================================  Color Constants ==================================
 #define BLACK          0x0000
@@ -544,7 +548,7 @@ void setup() {
   pinMode(PADDLE_A, INPUT_PULLUP);                // two paddle inputs, both active low
   pinMode(PADDLE_B, INPUT_PULLUP);
   tft.begin();                                    // initialize screen object
-  tft.setRotation(1);                             // landscape mode
+  tft.setRotation(3);                             // landscape mode: use '1' or '3'
   tft.fillScreen(BLACK);                          // start with blank screen
 }
 
