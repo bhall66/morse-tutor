@@ -570,7 +570,8 @@ void sendBook()
   const int pageSkip = 250;  
   File book = SD.open(TEXTFILE);                  // look for book on sd card
   if (book) {                                     // find it? 
-    while (book.available()) {                    // do for all characters in book:                
+    while (!button_pressed && book.available())   // do for all characters in book:
+    {                                    
       char ch = book.read();                      // get next character
       sendCharacter(ch);                          // and send it
       if (ch=='\r') sendCharacter(' ');           // treat CR as a space
@@ -699,15 +700,27 @@ void copyWords()                                  // show a callsign & see if us
   }
 }
 
+void showScore(int score)                         // helper fn for mimick()
+{
+  const int x=200,y=50,wd=105,ht=80;              // posn & size of scorecard
+  int bkColor = (score>0)?GREEN:RED;              // back-color green unless score 0
+  tft.setCursor(x+15,y+20);                       // position text within scorecard
+  tft.setTextSize(6);                             // use big text,
+  tft.setTextColor(BLACK,bkColor);                // in inverted font,
+  tft.fillRect(x,y,wd,ht,bkColor);                // on selected background
+  tft.print(score);                               // show the score
+  tft.setTextSize(2);                             // resume usual size
+  tft.setTextColor(TEXTCOLOR,BLACK);              // resume usual colors  
+}
+
 void mimick(char *text)
 {
-  const int x=200,y=50,wd=105,ht=80;              // posn & size of score card
   char ch, response[20]; 
-  static int score=0;
-  textRow=1; textCol=10;
-  sendString(text);                               // send it.
-  strcpy(response,"");
-  textRow=2; textCol=10;
+  static int score=0;                              
+  textRow=1; textCol=10;                          // set position of text 
+  sendString(text);                               // display text & morse it
+  strcpy(response,"");                            // start with empty response
+  textRow=2; textCol=10;                          // set position of response
   while (!button_pressed && !ditPressed()         // wait until user is ready
     && !dahPressed()) ;
   do {                                            // user has started keying...
@@ -716,20 +729,9 @@ void mimick(char *text)
     addCharacter(ch);                             // and put it on screen
   } while (ch!=' ');                              // space = word timeout
   if (!strcmp(text,response))                     // did user match the text?
-  {                                               // Yes! So show score card
-    tft.setCursor(x+15,y+20);
-    tft.setTextSize(6);                           // big text
-    tft.setTextColor(BLACK,GREEN);                // inverted font
-    tft.fillRect(x,y,wd,ht,GREEN);                // with green background
-    tft.print(++score);                           // show the score
-    tft.setTextSize(2);                           // resume usual size
-    tft.setTextColor(TEXTCOLOR,BLACK);            // resume usual colors
-  } 
-  else 
-  {                                               // Oh no! User didnt match text
-    tft.fillRect(x,y,wd,ht,RED);                  // red scorecard
-    score = 0;                                    // reset score
-  }
+    score++;                                      // yes, so increment score
+  else score = 0;                                 // no, so reset score to 0
+  showScore(score);                               // display score for user
   delay(FLASHCARDDELAY);                          // wait between attempts
   eraseMenus();                                   // erase screen for next attempt
 }
