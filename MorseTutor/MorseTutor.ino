@@ -564,13 +564,11 @@ void sendQSO()
   sendString(qso);                                // send entire QSO
 }
 
-void sendFromSD()                                 // show files on SD card, get user selection & send it.
+int getFileList  (char list[][13])                // gets list of files on SD card
 {
-  const int maxEntries = 9;                       // number of SD files displayed on screen
-  char list[maxEntries][13];                      // stores list of SD filenames (DOS 8.3 format, 13 char)
   File root = SD.open("/");                       // open root directory on the SD card
   int count=0;                                    // count the number of files
-  while (count < maxEntries)                      // only room for so many on our small screen!
+  while (count < MAXROW)                          // only room for so many on our small screen!
   {
     File entry = root.openNextFile();             // get next file in the SD root directory
     if (!entry) break;                            // leave if there aren't any more
@@ -578,9 +576,8 @@ void sendFromSD()                                 // show files on SD card, get 
       strcpy(list[count++],entry.name());         // add name of SD file to the list
     entry.close();                                // close the file
   }
-  root.close();                                   // close the root directory
-  int item = fileMenu(list,count);                // display list of file & let user choose one
-  sendFile(list[item]);                           // output text & morse until user quits
+  root.close(); 
+  return count;   
 }
 
 int fileMenu(char menu[][13], int itemCount)      // Display list of files & get user selection
@@ -613,7 +610,7 @@ int fileMenu(char menu[][13], int itemCount)      // Display list of files & get
   return index;  
 }
 
-void sendFile(char* filename)
+void sendFile(char* filename)                     // output a file to screen & morse
 {
   const int pageSkip = 250;
   eraseMenus(); textRow=0; textCol=0;             // clear screen below menu
@@ -634,6 +631,14 @@ void sendFile(char* filename)
     }
     book.close();                                 // close the file
   } 
+}
+
+void sendFromSD()                                 // show files on SD card, get user selection & send it.
+{
+  char list[MAXROW][13];                          // hold list of SD filenames (DOS 8.3 format, 13 char)
+  int count = getFileList(list);                  // get list of files on the SD card
+  int choice = fileMenu(list,count);              // display list & let user choose one
+  sendFile(list[choice]);                         // output text & morse until user quits
 }
 
 
