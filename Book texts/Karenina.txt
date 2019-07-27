@@ -1,64 +1,5 @@
-﻿
-The Project Gutenberg EBook of Anna Karenina, by Leo Tolstoy
-
-This eBook is for the use of anyone anywhere at no cost and with
-almost no restrictions whatsoever.  You may copy it, give it away or
-re-use it under the terms of the Project Gutenberg License included
-with this eBook or online at www.gutenberg.org
-
-
-Title: Anna Karenina
-
-Author: Leo Tolstoy
-
-Release Date: July 01, 1998 [EBook #1399]
-Last Updated: July 10, 2018
-
-Language: English
-
-Character set encoding: UTF-8
-
-*** START OF THIS PROJECT GUTENBERG EBOOK ANNA KARENINA ***
-
-
-
-
-Produced by David Brannan, Andrew Sly and David Widger.
-
-
-
-
-
- ANNA KARENINA 
-
-
-
+﻿ ANNA KARENINA
  by Leo Tolstoy 
-
-
- Translated by Constance Garnett 
-
-
-
-
-Contents
-
-
- PART ONE
- PART TWO
- PART THREE
- PART FOUR
- PART FIVE
- PART SIX
- PART SEVEN
- PART EIGHT
-
-
-
-PART ONE
-
-
-Chapter 1
 
 Happy families are all alike; every unhappy family is unhappy in its
 own way.
@@ -39895,6 +39836,68 @@ the power to put into it.”
 
 
 End of The Project Gutenberg Etext of Anna Karenina by Leo Tolstoy
+
+
+The Project Gutenberg EBook of Anna Karenina, by Leo Tolstoy
+
+This eBook is for the use of anyone anywhere at no cost and with
+almost no restrictions whatsoever.  You may copy it, give it away or
+re-use it under the terms of the Project Gutenberg License included
+with this eBook or online at www.gutenberg.org
+
+
+Title: Anna Karenina
+
+Author: Leo Tolstoy
+
+Release Date: July 01, 1998 [EBook #1399]
+Last Updated: July 10, 2018
+
+Language: English
+
+Character set encoding: UTF-8
+
+*** START OF THIS PROJECT GUTENBERG EBOOK ANNA KARENINA ***
+
+
+
+
+Produced by David Brannan, Andrew Sly and David Widger.
+
+
+
+
+
+ ANNA KARENINA 
+
+
+
+ by Leo Tolstoy 
+
+
+ Translated by Constance Garnett 
+
+
+
+
+Contents
+
+
+ PART ONE
+ PART TWO
+ PART THREE
+ PART FOUR
+ PART FIVE
+ PART SIX
+ PART SEVEN
+ PART EIGHT
+
+
+
+PART ONE
+
+
+Chapter 1
 
 
 *** END OF THIS PROJECT GUTENBERG EBOOK ANNA KARENINA ***

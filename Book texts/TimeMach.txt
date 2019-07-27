@@ -1,70 +1,6 @@
-
-The Project Gutenberg EBook of The Time Machine, by H. G. Wells
-
-This eBook is for the use of anyone anywhere at no cost and with
-almost no restrictions whatsoever.  You may copy it, give it away or
-re-use it under the terms of the Project Gutenberg License included
-with this eBook or online at www.gutenberg.net
-
-
-Title: The Time Machine
-
-Author: H. G. Wells
-
-Release Date: October 2, 2004 [EBook #35]
-Last Updated: January 14, 2018
-
-Language: English
-
-Character set encoding: UTF-8
-
-*** START OF THIS PROJECT GUTENBERG EBOOK THE TIME MACHINE ***
-
-
-
-
-
-
-The Time Machine
-
-
-An Invention
-
-
-
-
+﻿The Time Machine
 by H. G. Wells
 
-
-
-
-CONTENTS
-
-
- I Introduction
- II The Machine
- III The Time Traveller Returns
- IV Time Travelling
- V In the Golden Age
- VI The Sunset of Mankind
- VII A Sudden Shock
- VIII Explanation
- IX The Morlocks
- X When Night Came
- XI The Palace of Green Porcelain
- XII In the Darkness
- XIII The Trap of the White Sphinx
- XIV The Further Vision
- XV The Time Traveller’s Return
- XVI After the Story
- Epilogue
-
-
-
- I
-
-
- Introduction
 
 The Time Traveller (for so it will be convenient to speak of him) was
 expounding a recondite matter to us. His pale grey eyes shone and
@@ -3213,6 +3149,74 @@ still lived on in the heart of man.
 End of the Project Gutenberg EBook of The Time Machine, by H. G. Wells
 
 *** END OF THIS PROJECT GUTENBERG EBOOK THE TIME MACHINE ***
+
+
+The Project Gutenberg EBook of The Time Machine, by H. G. Wells
+
+This eBook is for the use of anyone anywhere at no cost and with
+almost no restrictions whatsoever.  You may copy it, give it away or
+re-use it under the terms of the Project Gutenberg License included
+with this eBook or online at www.gutenberg.net
+
+
+Title: The Time Machine
+
+Author: H. G. Wells
+
+Release Date: October 2, 2004 [EBook #35]
+Last Updated: January 14, 2018
+
+Language: English
+
+Character set encoding: UTF-8
+
+*** START OF THIS PROJECT GUTENBERG EBOOK THE TIME MACHINE ***
+
+
+
+
+
+
+The Time Machine
+
+
+An Invention
+
+
+
+
+by H. G. Wells
+
+
+
+
+CONTENTS
+
+
+ I Introduction
+ II The Machine
+ III The Time Traveller Returns
+ IV Time Travelling
+ V In the Golden Age
+ VI The Sunset of Mankind
+ VII A Sudden Shock
+ VIII Explanation
+ IX The Morlocks
+ X When Night Came
+ XI The Palace of Green Porcelain
+ XII In the Darkness
+ XIII The Trap of the White Sphinx
+ XIV The Further Vision
+ XV The Time Traveller’s Return
+ XVI After the Story
+ Epilogue
+
+
+
+ I
+
+
+ Introduction
 
 ***** This file should be named 35-0.txt or 35-0.zip *****
 This and all associated files of various formats will be found in:

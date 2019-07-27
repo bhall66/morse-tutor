@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   14 Jul 2019
+        Date:   26 Jul 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -35,7 +35,6 @@
 
 //===================================  Morse Code Constants =============================
 #define MYCALL          "W8BH"                    // your callsign for splash scrn & QSO
-#define TEXTFILE        "morse.txt"               // name of file on SD card
 #define DEFAULTSPEED       13                     // character speed in Words per Minute
 #define MAXSPEED           50                     // fastest morse speed in WPM
 #define MINSPEED            3                     // slowest morse speed in WPM
@@ -179,7 +178,7 @@ bool paused   = false;
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
-char *menu0[]    = {" Letters ", " Words   ", " Book    ", " QSO     ", " Numbers ", " Punc    ", " Mixed   ", "Callsigns",  " Exit    "};
+char *menu0[]    = {" Letters ", " Words   ", " SD Card ", " QSO     ", " Numbers ", " Punc    ", " Mixed   ", "Callsigns",  " Exit    "};
 char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", "Flashcard", " Exit    "};
 char *menu2[]    = {" Speed   ", "CharSpeed", "Chk Speed", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
 
@@ -565,10 +564,61 @@ void sendQSO()
   sendString(qso);                                // send entire QSO
 }
 
-void sendBook()
+void sendFromSD()                                 // show files on SD card, get user selection & send it.
 {
-  const int pageSkip = 250;  
-  File book = SD.open(TEXTFILE);                  // look for book on sd card
+  const int maxEntries = 9;                       // number of SD files displayed on screen
+  char list[maxEntries][13];                      // stores list of SD filenames (DOS 8.3 format, 13 char)
+  File root = SD.open("/");                       // open root directory on the SD card
+  int count=0;                                    // count the number of files
+  while (count < maxEntries)                      // only room for so many on our small screen!
+  {
+    File entry = root.openNextFile();             // get next file in the SD root directory
+    if (!entry) break;                            // leave if there aren't any more
+    if (!entry.isDirectory())                     // ignore directory names
+      strcpy(list[count++],entry.name());         // add name of SD file to the list
+    entry.close();                                // close the file
+  }
+  root.close();                                   // close the root directory
+  int item = fileMenu(list,count);                // display list of file & let user choose one
+  sendFile(list[item]);                           // output text & morse until user quits
+}
+
+int fileMenu(char menu[][13], int itemCount)      // Display list of files & get user selection
+{
+  int index=0, x,y; 
+  button_pressed = false;                         // reset button flag
+  x = 30;                                         // x-coordinate of this menu
+  for (int i = 0; i < itemCount; i++)             // for all items in the menu...
+  {
+     y = TOPDEADSPACE + i*ROWSPACING;             // calculate y coordinate
+     showMenuItem(menu[i],x,y,FG,BG);             // and show the item.
+  }
+  showMenuItem(menu[index],x,TOPDEADSPACE,        // highlight selected item
+    SELECTFG,SELECTBG);
+  while (!button_pressed)                         // exit on button press
+  {
+    int dir = readEncoder();                      // check for encoder movement
+    if (dir)                                      // it moved!    
+    {
+      y = TOPDEADSPACE + index*ROWSPACING;        // calc y-coord of current item
+      showMenuItem(menu[index],x,y,FG,BG);        // deselect current item
+      index += dir;                               // go to next/prev item
+      if (index > itemCount-1) index=0;           // dont go past last item
+      if (index < 0) index = itemCount-1;         // dont go before first item
+       y = TOPDEADSPACE + index*ROWSPACING;       // calc y-coord of new item
+      showMenuItem(menu[index],x,y,
+      SELECTFG,SELECTBG);                         // select new item
+    }
+  }
+  return index;  
+}
+
+void sendFile(char* filename)
+{
+  const int pageSkip = 250;
+  eraseMenus(); textRow=0; textCol=0;             // clear screen below menu
+  button_pressed = false;                         // reset flag for new presses
+  File book = SD.open(filename);                  // look for book on sd card
   if (book) {                                     // find it? 
     while (!button_pressed && book.available())   // do for all characters in book:
     {                                    
@@ -1077,7 +1127,7 @@ void loop()
   {
     case 00: sendLetters(); break;
     case 01: sendWords(); break;
-    case 02: sendBook(); break;
+    case 02: sendFromSD(); break;
     case 03: sendQSO(); break;
     case 04: sendNumbers(); break;
     case 05: sendPunctuation(); break;

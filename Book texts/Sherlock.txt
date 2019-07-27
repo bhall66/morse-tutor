@@ -1,65 +1,6 @@
-
-Project Gutenberg's The Adventures of Sherlock Holmes, by Arthur Conan Doyle
-
-This eBook is for the use of anyone anywhere at no cost and with
-almost no restrictions whatsoever.  You may copy it, give it away or
-re-use it under the terms of the Project Gutenberg License included
-with this eBook or online at www.gutenberg.net
-
-
-Title: The Adventures of Sherlock Holmes
-
-Author: Arthur Conan Doyle
-
-Release Date: November 29, 2002 [EBook #1661]
-Last Updated: May 20, 2019
-
-Language: English
-
-Character set encoding: UTF-8
-
-*** START OF THIS PROJECT GUTENBERG EBOOK THE ADVENTURES OF SHERLOCK HOLMES ***
-
-
-
-Produced by an anonymous Project Gutenberg volunteer and Jose Menendez
-
-
-
-cover
-
-
-
-The Adventures of Sherlock Holmes
-
-
-
+﻿The Adventures of Sherlock Holmes
 by Arthur Conan Doyle
 
-
-
-Contents
-
-
-   I.     A Scandal in Bohemia
-   II.    The Red-Headed League
-   III.   A Case of Identity
-   IV.    The Boscombe Valley Mystery
-   V.     The Five Orange Pips
-   VI.    The Man with the Twisted Lip
-   VII.   The Adventure of the Blue Carbuncle
-   VIII.  The Adventure of the Speckled Band
-   IX.    The Adventure of the Engineer’s Thumb
-   X.     The Adventure of the Noble Bachelor
-   XI.    The Adventure of the Beryl Coronet
-   XII.   The Adventure of the Copper Beeches
-
-
-
-I. A SCANDAL IN BOHEMIA
-
-
-I.
 
 To Sherlock Holmes she is always _the_ woman. I have seldom heard him
 mention her under any other name. In his eyes she eclipses and
@@ -11942,6 +11883,69 @@ Walsall, where I believe that she has met with considerable success.
 
 End of the Project Gutenberg EBook of The Adventures of Sherlock Holmes, by 
 Arthur Conan Doyle
+
+
+Project Gutenberg's The Adventures of Sherlock Holmes, by Arthur Conan Doyle
+
+This eBook is for the use of anyone anywhere at no cost and with
+almost no restrictions whatsoever.  You may copy it, give it away or
+re-use it under the terms of the Project Gutenberg License included
+with this eBook or online at www.gutenberg.net
+
+
+Title: The Adventures of Sherlock Holmes
+
+Author: Arthur Conan Doyle
+
+Release Date: November 29, 2002 [EBook #1661]
+Last Updated: May 20, 2019
+
+Language: English
+
+Character set encoding: UTF-8
+
+*** START OF THIS PROJECT GUTENBERG EBOOK THE ADVENTURES OF SHERLOCK HOLMES ***
+
+
+
+Produced by an anonymous Project Gutenberg volunteer and Jose Menendez
+
+
+
+cover
+
+
+
+The Adventures of Sherlock Holmes
+
+
+
+by Arthur Conan Doyle
+
+
+
+Contents
+
+
+   I.     A Scandal in Bohemia
+   II.    The Red-Headed League
+   III.   A Case of Identity
+   IV.    The Boscombe Valley Mystery
+   V.     The Five Orange Pips
+   VI.    The Man with the Twisted Lip
+   VII.   The Adventure of the Blue Carbuncle
+   VIII.  The Adventure of the Speckled Band
+   IX.    The Adventure of the Engineer’s Thumb
+   X.     The Adventure of the Noble Bachelor
+   XI.    The Adventure of the Beryl Coronet
+   XII.   The Adventure of the Copper Beeches
+
+
+
+I. A SCANDAL IN BOHEMIA
+
+
+I.
 
 *** END OF THIS PROJECT GUTENBERG EBOOK THE ADVENTURES OF SHERLOCK HOLMES ***
 

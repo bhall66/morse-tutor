@@ -1,178 +1,5 @@
-﻿The Project Gutenberg EBook of The Scarlet Letter, by Nathaniel Hawthorne
-
-This eBook is for the use of anyone anywhere at no cost and with
-almost no restrictions whatsoever.  You may copy it, give it away or
-re-use it under the terms of the Project Gutenberg License included
-with this eBook or online at www.gutenberg.net
-
-
-Title: The Scarlet Letter
-
-Author: Nathaniel Hawthorne
-
-Posting Date: December 18, 2011 [EBook #33]
-Release Date: February, 1992
-Last Updated: June 2, 2017
-
-Language: English
-
-
-*** START OF THIS PROJECT GUTENBERG EBOOK THE SCARLET LETTER ***
-
-
-
-
-Produced by Dartmouth College
-
-
-
-
-***********************************************************************
-THERE IS AN IMPROVED EDITION OF THIS TITLE WHICH MAY BE VIEWED AT EBOOK
-(#25344) WHICH CONTAINS AN ILLUSTRATED HTML FILE
-***********************************************************************
-
-
-
-
-
-THE SCARLET LETTER
-
+﻿THE SCARLET LETTER
 by Nathaniel Hawthorne
-
-
-
-EDITOR'S NOTE
-
-Nathaniel Hawthorne was already a man of forty-six, and a tale
-writer of some twenty-four years' standing, when "The Scarlet
-Letter" appeared.  He was born at Salem, Mass., on July 4th, 1804,
-son of a sea-captain.  He led there a shy and rather sombre life;
-of few artistic encouragements, yet not wholly uncongenial, his
-moody, intensely meditative temperament being considered.  Its
-colours and shadows are marvelously reflected in his "Twice-Told
-Tales" and other short stories, the product of his first literary
-period.  Even his college days at Bowdoin did not quite break
-through his acquired and inherited reserve; but beneath it all,
-his faculty of divining men and women was exercised with almost
-uncanny prescience and subtlety.  "The Scarlet Letter," which
-explains as much of this unique imaginative art, as is to be
-gathered from reading his highest single achievement, yet needs
-to be ranged with his other writings, early and late, to have its
-last effect.  In the year that saw it published, he began "The
-House of the Seven Gables," a later romance or prose-tragedy of
-the Puritan-American community as he had himself known it--
-defrauded of art and the joy of life, "starving for symbols" as
-Emerson has it.  Nathaniel Hawthorne died at Plymouth, New
-Hampshire, on May 18th, 1864.
-
-The following is the table of his romances,
-stories, and other works:
-
-Fanshawe, published anonymously, 1826; Twice-Told Tales, 1st
-Series, 1837; 2nd Series, 1842; Grandfather's Chair, a history
-for youth, 1845: Famous Old People (Grandfather's Chair), 1841
-Liberty Tree: with the last words of Grandfather's Chair, 1842;
-Biographical Stories for Children, 1842; Mosses from an Old
-Manse, 1846; The Scarlet Letter, 1850; The House of the Seven
-Gables, 1851: True Stories from History and Biography (the whole
-History of Grandfather's Chair), 1851 A Wonder Book for Girls and
-Boys, 1851; The Snow Image and other Tales, 1851: The Blithedale
-Romance, 1852; Life of Franklin Pierce, 1852; Tanglewood Tales
-(2nd Series of the Wonder Book), 1853; A Rill from the Town-Pump,
-with remarks, by Telba, 1857; The Marble Faun; or, The Romance of
-Monte Beni (4 EDITOR'S NOTE) (published in England under the
-title of "Transformation"), 1860, Our Old Home, 1863; Dolliver
-Romance (1st Part in "Atlantic Monthly"), 1864; in 3 Parts, 1876;
-Pansie, a fragment, Hawthorne' last literary effort, 1864;
-American Note-Books, 1868; English Note Books, edited by Sophia
-Hawthorne, 1870; French and Italian Note Books, 1871; Septimius
-Felton; or, the Elixir of Life (from the "Atlantic Monthly"),
-1872; Doctor Grimshawe's Secret, with Preface and Notes by
-Julian Hawthorne, 1882.
-
-Tales of the White Hills, Legends of New England, Legends of the
-Province House, 1877, contain tales which had already been
-printed in book form in "Twice-Told Tales" and the "Mosses"
-"Sketched and Studies," 1883.
-
-Hawthorne's contributions to magazines were numerous, and most of
-his tales appeared first in periodicals, chiefly in "The Token,"
-1831-1838, "New England Magazine," 1834,1835; "Knickerbocker,"
-1837-1839; "Democratic Review," 1838-1846; "Atlantic Monthly,"
-1860-1872 (scenes from the Dolliver Romance, Septimius Felton,
-and passages from Hawthorne's Note-Books).
-
-Works: in 24 volumes, 1879; in 12 volumes, with introductory
-notes by Lathrop, Riverside Edition, 1883.
-
-Biography, etc.; A. H. Japp (pseud.  H. A. Page), Memoir of N.
-Hawthorne, 1872; J. T. Field's "Yesterdays with Authors," 1873 G.
-P. Lathrop, "A Study of Hawthorne," 1876; Henry James English Men
-of Letters, 1879; Julian Hawthorne, "Nathaniel Hawthorne and his
-wife," 1885; Moncure D. Conway, Life of Nathaniel Hawthorne,
-1891; Analytical Index of Hawthorne's Works, by E. M. O'Connor
-1882.
-
-
-CONTENTS
-
-    INTRODUCTORY.     THE CUSTOM-HOUSE
-
-    CHAPTER I.        THE PRISON-DOOR
-
-    CHAPTER II.       THE MARKET-PLACE
-
-    CHAPTER III.      THE RECOGNITION
-
-    CHAPTER IV.       THE INTERVIEW
-
-    CHAPTER V.        HESTER AT HER NEEDLE
-
-    CHAPTER VI.       PEARL
-
-    CHAPTER VII.      THE GOVERNOR'S HALL
-
-    CHAPTER VIII.     THE ELF-CHILD AND THE MINISTER
-
-    CHAPTER IX.       THE LEECH
-
-    CHAPTER X.        THE LEECH AND HIS PATIENT
-
-    CHAPTER XI.       THE INTERIOR OF A HEART
-
-    CHAPTER XII.      THE MINISTER'S VIGIL
-
-    CHAPTER XIII.     ANOTHER VIEW OF HESTER
-
-    CHAPTER XIV.      HESTER AND THE PHYSICIAN
-
-    CHAPTER XV.       HESTER AND PEARL
-
-    CHAPTER XVI.      A FOREST WALK
-
-    CHAPTER XVII.     THE PASTOR AND HIS PARISHIONER
-
-    CHAPTER XVIII.    A FLOOD OF SUNSHINE
-
-    CHAPTER XIX.      THE CHILD AT THE BROOK-SIDE
-
-    CHAPTER XX.       THE MINISTER IN A MAZE
-
-    CHAPTER XXI.      THE NEW ENGLAND HOLIDAY
-
-    CHAPTER XXII.     THE PROCESSION
-
-    CHAPTER XXIII.    THE REVELATION OF THE SCARLET LETTER
-
-    CHAPTER XXIV.     CONCLUSION
-
-
-
-
-THE CUSTOM-HOUSE
-
-INTRODUCTORY TO "THE SCARLET LETTER"
 
 
 It is a little remarkable, that--though disinclined to talk
@@ -9091,6 +8918,175 @@ point of light gloomier than the shadow:--
 End of Project Gutenberg's The Scarlet Letter, by Nathaniel Hawthorne
 
 *** END OF THIS PROJECT GUTENBERG EBOOK THE SCARLET LETTER ***
+
+The Project Gutenberg EBook of The Scarlet Letter, by Nathaniel Hawthorne
+
+This eBook is for the use of anyone anywhere at no cost and with
+almost no restrictions whatsoever.  You may copy it, give it away or
+re-use it under the terms of the Project Gutenberg License included
+with this eBook or online at www.gutenberg.net
+
+
+Title: The Scarlet Letter
+
+Author: Nathaniel Hawthorne
+
+Posting Date: December 18, 2011 [EBook #33]
+Release Date: February, 1992
+Last Updated: June 2, 2017
+
+Language: English
+
+
+*** START OF THIS PROJECT GUTENBERG EBOOK THE SCARLET LETTER ***
+
+
+
+
+Produced by Dartmouth College
+
+
+
+
+***********************************************************************
+THERE IS AN IMPROVED EDITION OF THIS TITLE WHICH MAY BE VIEWED AT EBOOK
+(#25344) WHICH CONTAINS AN ILLUSTRATED HTML FILE
+***********************************************************************
+
+
+
+
+
+THE SCARLET LETTER
+
+by Nathaniel Hawthorne
+
+
+
+EDITOR'S NOTE
+
+Nathaniel Hawthorne was already a man of forty-six, and a tale
+writer of some twenty-four years' standing, when "The Scarlet
+Letter" appeared.  He was born at Salem, Mass., on July 4th, 1804,
+son of a sea-captain.  He led there a shy and rather sombre life;
+of few artistic encouragements, yet not wholly uncongenial, his
+moody, intensely meditative temperament being considered.  Its
+colours and shadows are marvelously reflected in his "Twice-Told
+Tales" and other short stories, the product of his first literary
+period.  Even his college days at Bowdoin did not quite break
+through his acquired and inherited reserve; but beneath it all,
+his faculty of divining men and women was exercised with almost
+uncanny prescience and subtlety.  "The Scarlet Letter," which
+explains as much of this unique imaginative art, as is to be
+gathered from reading his highest single achievement, yet needs
+to be ranged with his other writings, early and late, to have its
+last effect.  In the year that saw it published, he began "The
+House of the Seven Gables," a later romance or prose-tragedy of
+the Puritan-American community as he had himself known it--
+defrauded of art and the joy of life, "starving for symbols" as
+Emerson has it.  Nathaniel Hawthorne died at Plymouth, New
+Hampshire, on May 18th, 1864.
+
+The following is the table of his romances,
+stories, and other works:
+
+Fanshawe, published anonymously, 1826; Twice-Told Tales, 1st
+Series, 1837; 2nd Series, 1842; Grandfather's Chair, a history
+for youth, 1845: Famous Old People (Grandfather's Chair), 1841
+Liberty Tree: with the last words of Grandfather's Chair, 1842;
+Biographical Stories for Children, 1842; Mosses from an Old
+Manse, 1846; The Scarlet Letter, 1850; The House of the Seven
+Gables, 1851: True Stories from History and Biography (the whole
+History of Grandfather's Chair), 1851 A Wonder Book for Girls and
+Boys, 1851; The Snow Image and other Tales, 1851: The Blithedale
+Romance, 1852; Life of Franklin Pierce, 1852; Tanglewood Tales
+(2nd Series of the Wonder Book), 1853; A Rill from the Town-Pump,
+with remarks, by Telba, 1857; The Marble Faun; or, The Romance of
+Monte Beni (4 EDITOR'S NOTE) (published in England under the
+title of "Transformation"), 1860, Our Old Home, 1863; Dolliver
+Romance (1st Part in "Atlantic Monthly"), 1864; in 3 Parts, 1876;
+Pansie, a fragment, Hawthorne' last literary effort, 1864;
+American Note-Books, 1868; English Note Books, edited by Sophia
+Hawthorne, 1870; French and Italian Note Books, 1871; Septimius
+Felton; or, the Elixir of Life (from the "Atlantic Monthly"),
+1872; Doctor Grimshawe's Secret, with Preface and Notes by
+Julian Hawthorne, 1882.
+
+Tales of the White Hills, Legends of New England, Legends of the
+Province House, 1877, contain tales which had already been
+printed in book form in "Twice-Told Tales" and the "Mosses"
+"Sketched and Studies," 1883.
+
+Hawthorne's contributions to magazines were numerous, and most of
+his tales appeared first in periodicals, chiefly in "The Token,"
+1831-1838, "New England Magazine," 1834,1835; "Knickerbocker,"
+1837-1839; "Democratic Review," 1838-1846; "Atlantic Monthly,"
+1860-1872 (scenes from the Dolliver Romance, Septimius Felton,
+and passages from Hawthorne's Note-Books).
+
+Works: in 24 volumes, 1879; in 12 volumes, with introductory
+notes by Lathrop, Riverside Edition, 1883.
+
+Biography, etc.; A. H. Japp (pseud.  H. A. Page), Memoir of N.
+Hawthorne, 1872; J. T. Field's "Yesterdays with Authors," 1873 G.
+P. Lathrop, "A Study of Hawthorne," 1876; Henry James English Men
+of Letters, 1879; Julian Hawthorne, "Nathaniel Hawthorne and his
+wife," 1885; Moncure D. Conway, Life of Nathaniel Hawthorne,
+1891; Analytical Index of Hawthorne's Works, by E. M. O'Connor
+1882.
+
+
+CONTENTS
+
+    INTRODUCTORY.     THE CUSTOM-HOUSE
+
+    CHAPTER I.        THE PRISON-DOOR
+
+    CHAPTER II.       THE MARKET-PLACE
+
+    CHAPTER III.      THE RECOGNITION
+
+    CHAPTER IV.       THE INTERVIEW
+
+    CHAPTER V.        HESTER AT HER NEEDLE
+
+    CHAPTER VI.       PEARL
+
+    CHAPTER VII.      THE GOVERNOR'S HALL
+
+    CHAPTER VIII.     THE ELF-CHILD AND THE MINISTER
+
+    CHAPTER IX.       THE LEECH
+
+    CHAPTER X.        THE LEECH AND HIS PATIENT
+
+    CHAPTER XI.       THE INTERIOR OF A HEART
+
+    CHAPTER XII.      THE MINISTER'S VIGIL
+
+    CHAPTER XIII.     ANOTHER VIEW OF HESTER
+
+    CHAPTER XIV.      HESTER AND THE PHYSICIAN
+
+    CHAPTER XV.       HESTER AND PEARL
+
+    CHAPTER XVI.      A FOREST WALK
+
+    CHAPTER XVII.     THE PASTOR AND HIS PARISHIONER
+
+    CHAPTER XVIII.    A FLOOD OF SUNSHINE
+
+    CHAPTER XIX.      THE CHILD AT THE BROOK-SIDE
+
+    CHAPTER XX.       THE MINISTER IN A MAZE
+
+    CHAPTER XXI.      THE NEW ENGLAND HOLIDAY
+
+    CHAPTER XXII.     THE PROCESSION
+
+    CHAPTER XXIII.    THE REVELATION OF THE SCARLET LETTER
+
+    CHAPTER XXIV.     CONCLUSION
 
 ***** This file should be named 33.txt or 33.zip *****
 This and all associated files of various formats will be found in:

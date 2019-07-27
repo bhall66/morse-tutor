@@ -1,198 +1,5 @@
-﻿The Project Gutenberg EBook of Dracula, by Bram Stoker
-
-This eBook is for the use of anyone anywhere at no cost and with
-almost no restrictions whatsoever.  You may copy it, give it away or
-re-use it under the terms of the Project Gutenberg License included
-with this eBook or online at www.gutenberg.org/license
-
-
-Title: Dracula
-
-Author: Bram Stoker
-
-Release Date: August 16, 2013 [EBook #345]
-
-Language: English
-
-
-*** START OF THIS PROJECT GUTENBERG EBOOK DRACULA ***
-
-
-
-
-Produced by Chuck Greif and the Online Distributed
-Proofreading Team at http://www.pgdp.net (This file was
-produced from images generously made available by The
-Internet Archive)
-
-
-
-
-
-
-
-                                DRACULA
-
-
-
-
-
-                                DRACULA
-
-                                  _by_
-
-                              Bram Stoker
-
-                        [Illustration: colophon]
-
-                                NEW YORK
-
-                            GROSSET & DUNLAP
-
-                              _Publishers_
-
-      Copyright, 1897, in the United States of America, according
-                   to Act of Congress, by Bram Stoker
-
-                        [_All rights reserved._]
-
-                      PRINTED IN THE UNITED STATES
-                                   AT
-               THE COUNTRY LIFE PRESS, GARDEN CITY, N.Y.
-
-
-
-
-                                   TO
-
-                             MY DEAR FRIEND
-
-                               HOMMY-BEG
-
-
-
-
-CONTENTS
-
-
-CHAPTER I
-                                                                    Page
-
-Jonathan Harker's Journal                                              1
-
-CHAPTER II
-
-Jonathan Harker's Journal                                             14
-
-CHAPTER III
-
-Jonathan Harker's Journal                                             26
-
-CHAPTER IV
-
-Jonathan Harker's Journal                                             38
-
-CHAPTER V
-
-Letters--Lucy and Mina                                                51
-
-CHAPTER VI
-
-Mina Murray's Journal                                                 59
-
-CHAPTER VII
-
-Cutting from "The Dailygraph," 8 August                               71
-
-CHAPTER VIII
-
-Mina Murray's Journal                                                 84
-
-CHAPTER IX
-
-Mina Murray's Journal                                                 98
-
-CHAPTER X
-
-Mina Murray's Journal                                                111
-
-CHAPTER XI
-
-Lucy Westenra's Diary                                                124
-
-CHAPTER XII
-
-Dr. Seward's Diary                                                   136
-
-CHAPTER XIII
-
-Dr. Seward's Diary                                                   152
-
-CHAPTER XIV
-
-Mina Harker's Journal                                                167
-
-CHAPTER XV
-
-Dr. Seward's Diary                                                   181
-
-CHAPTER XVI
-
-Dr. Seward's Diary                                                   194
-
-CHAPTER XVII
-
-Dr. Seward's Diary                                                   204
-
-CHAPTER XVIII
-
-Dr. Seward's Diary                                                   216
-
-CHAPTER XIX
-
-Jonathan Harker's Journal                                            231
-
-CHAPTER XX
-
-Jonathan Harker's Journal                                            243
-
-CHAPTER XXI
-
-Dr. Seward's Diary                                                   256
-
-CHAPTER XXII
-
-Jonathan Harker's Journal                                            269
-
-CHAPTER XXIII
-
-Dr. Seward's Diary                                                   281
-
-CHAPTER XXIV
-
-Dr. Seward's Phonograph Diary, spoken by Van Helsing                 294
-
-CHAPTER XXV
-
-Dr. Seward's Diary                                                   308
-
-CHAPTER XXVI
-
-Dr. Seward's Diary                                                   322
-
-CHAPTER XXVII
-
-Mina Harker's Journal                                                338
-
-
-
-
-DRACULA
-
-
-
-
-CHAPTER I
+﻿DRACULA
+by Bram Stoker
 
 JONATHAN HARKER'S JOURNAL
 
@@ -15609,6 +15416,202 @@ this mrrning from Dardanelles=> this morning from Dardanelles {pg 313}
 End of the Project Gutenberg EBook of Dracula, by Bram Stoker
 
 *** END OF THIS PROJECT GUTENBERG EBOOK DRACULA ***
+
+The Project Gutenberg EBook of Dracula, by Bram Stoker
+
+This eBook is for the use of anyone anywhere at no cost and with
+almost no restrictions whatsoever.  You may copy it, give it away or
+re-use it under the terms of the Project Gutenberg License included
+with this eBook or online at www.gutenberg.org/license
+
+
+Title: Dracula
+
+Author: Bram Stoker
+
+Release Date: August 16, 2013 [EBook #345]
+
+Language: English
+
+
+*** START OF THIS PROJECT GUTENBERG EBOOK DRACULA ***
+
+
+
+
+Produced by Chuck Greif and the Online Distributed
+Proofreading Team at http://www.pgdp.net (This file was
+produced from images generously made available by The
+Internet Archive)
+
+
+
+
+
+
+
+                                DRACULA
+
+
+
+
+
+                                DRACULA
+
+                                  _by_
+
+                              Bram Stoker
+
+                        [Illustration: colophon]
+
+                                NEW YORK
+
+                            GROSSET & DUNLAP
+
+                              _Publishers_
+
+      Copyright, 1897, in the United States of America, according
+                   to Act of Congress, by Bram Stoker
+
+                        [_All rights reserved._]
+
+                      PRINTED IN THE UNITED STATES
+                                   AT
+               THE COUNTRY LIFE PRESS, GARDEN CITY, N.Y.
+
+
+
+
+                                   TO
+
+                             MY DEAR FRIEND
+
+                               HOMMY-BEG
+
+
+
+
+CONTENTS
+
+
+CHAPTER I
+                                                                    Page
+
+Jonathan Harker's Journal                                              1
+
+CHAPTER II
+
+Jonathan Harker's Journal                                             14
+
+CHAPTER III
+
+Jonathan Harker's Journal                                             26
+
+CHAPTER IV
+
+Jonathan Harker's Journal                                             38
+
+CHAPTER V
+
+Letters--Lucy and Mina                                                51
+
+CHAPTER VI
+
+Mina Murray's Journal                                                 59
+
+CHAPTER VII
+
+Cutting from "The Dailygraph," 8 August                               71
+
+CHAPTER VIII
+
+Mina Murray's Journal                                                 84
+
+CHAPTER IX
+
+Mina Murray's Journal                                                 98
+
+CHAPTER X
+
+Mina Murray's Journal                                                111
+
+CHAPTER XI
+
+Lucy Westenra's Diary                                                124
+
+CHAPTER XII
+
+Dr. Seward's Diary                                                   136
+
+CHAPTER XIII
+
+Dr. Seward's Diary                                                   152
+
+CHAPTER XIV
+
+Mina Harker's Journal                                                167
+
+CHAPTER XV
+
+Dr. Seward's Diary                                                   181
+
+CHAPTER XVI
+
+Dr. Seward's Diary                                                   194
+
+CHAPTER XVII
+
+Dr. Seward's Diary                                                   204
+
+CHAPTER XVIII
+
+Dr. Seward's Diary                                                   216
+
+CHAPTER XIX
+
+Jonathan Harker's Journal                                            231
+
+CHAPTER XX
+
+Jonathan Harker's Journal                                            243
+
+CHAPTER XXI
+
+Dr. Seward's Diary                                                   256
+
+CHAPTER XXII
+
+Jonathan Harker's Journal                                            269
+
+CHAPTER XXIII
+
+Dr. Seward's Diary                                                   281
+
+CHAPTER XXIV
+
+Dr. Seward's Phonograph Diary, spoken by Van Helsing                 294
+
+CHAPTER XXV
+
+Dr. Seward's Diary                                                   308
+
+CHAPTER XXVI
+
+Dr. Seward's Diary                                                   322
+
+CHAPTER XXVII
+
+Mina Harker's Journal                                                338
+
+
+
+
+DRACULA
+
+
+
+
+CHAPTER I
 
 ***** This file should be named 345-8.txt or 345-8.zip *****
 This and all associated files of various formats will be found in:
