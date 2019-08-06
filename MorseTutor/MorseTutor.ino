@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   26 Jul 2019
+        Date:   05 Aug 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -100,12 +100,14 @@ char *words[]     = {"THE", "OF", "AND", "TO", "A", "IN", "THAT", "IS", "WAS", "
                     };
 char *antenna[]   = {"DIPOLE", "VERTICAL", "BEAM"};
 char *weather[]   = {"WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY"};
-char *names[]     = {"FRED", "JOHN", "TERRY", "JANE", "SUE", "LEON", "KIP", "DOUG", "ZEKE", "JOSH", "JILL", "LYNN"};
+char *names[]     = {"WAYNE", "JOHN", "TERRY", "JANE", "SUE", "LEON", "DARREN", "DOUG", "ZEB", "JOSH", "JILL", "LYNN"};
 char *cities[]    = {"MEDINA, OH", "BILLINGS, MT", "SAN DIEGO", "WALLA WALLA, WA", "VERO BEACH, FL", "NASHVILLE, TN", "NYC", "CHICAGO", "LOS ANGELES", // 0-8
                     "POSSUM TROT, MS", "ASPEN, CO", "AUSTIN, TX", "RALEIGH, NC"};
 char *rigs[]      = {"YAESU FT101", "KENWOOD 780", "ELECRAFT K3", "HOMEBREW", "QRPLABS QCX", "ICOM 7410", "FLEX 6400"};
 char punctuation[]= "!@$&()-+=,.:;'/";
 char prefix[]     = {'A', 'W', 'K', 'N'};
+char koch[]       = "KMRSUAPTLOWI.NJEF0Y,VG5/Q9ZH38B?427CLD6X";
+
 byte morse[] = {                                  // Each character is encoded into an 8-bit byte:
   0b01001010,        // ! exclamation        
   0b01101101,        // " quotation          
@@ -173,14 +175,16 @@ int ditPeriod = 100;
 int ditPaddle = PADDLE_A;
 int dahPaddle = PADDLE_B;
 int pitch     = DEFAULTPITCH;
+int kochLevel = 1;
 bool paused   = false;
 
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
-char *menu0[]    = {" Letters ", " Words   ", " SD Card ", " QSO     ", " Numbers ", " Punc    ", " Mixed   ", "Callsigns",  " Exit    "};
-char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", "Flashcard", " Exit    "};
-char *menu2[]    = {" Speed   ", "CharSpeed", "Chk Speed", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
+char *menu0[]    = {" Koch    ", " Letters ", " Words   ", " Numbers ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " Exit    "};
+char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", " Flashcrd", " Two-Way ", " Exit    "};
+char *menu2[]    = {" Speed   ", " Char Spd", " Chk Spd ", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
+
 
 //===================================  Rotary Encoder Code  =============================
 
@@ -419,6 +423,91 @@ void checkPause()
     paused = false;                               // yes, so resume output
 }
 
+
+//===================================  Koch Method  =====================================
+
+void setTopMenu(char *str)                        // erase menu & replace with new text
+{
+  tft.fillRect(0,0,DISPLAYWIDTH,ROWSPACING,BLACK); 
+  showMenuItem(str,0,0,FG,BG);                    
+}
+
+void sendKochLesson(int lesson)                   // send letter/number groups...
+{ 
+  const int maxCount = 175;                       // full screen = 20 x 9
+  int charCount = 0;
+  eraseMenus();                                   // start with empty screen
+  while (!button_pressed && 
+  (charCount < maxCount))                         // full screen = 1 lesson 
+  {                            
+    for (int i=0; i<WORDSIZE; i++)                // break them up into "words"
+    {
+      int c = koch[random(lesson+1)];             // pick a random character
+      sendCharacter(c);                           // and send it
+      charCount ++;                               // keep track of #chars sent
+    }
+    sendCharacter(' ');                           // send a space between words
+  }
+}
+
+void introLesson(int lesson)                      // helper fn for getLessonNumber()
+{
+  eraseMenus();                                   // start with clean screen
+  tft.print("You are in lesson ");
+  tft.println(lesson);                            // show lesson number
+  tft.println("\nCharacters: ");                  
+  tft.setTextColor(CYAN);
+  for (int i=0; i<=lesson; i++)                   // show characters in this lession
+  {
+    tft.print(koch[i]);
+    tft.print(" ");
+  }
+  tft.setTextColor(TEXTCOLOR);
+  tft.println("\n\nPress <dit> to begin");  
+}
+
+int getLessonNumber()
+{
+  int lesson = kochLevel;                         // start at current level
+  introLesson(lesson);                            // display lesson number
+  while (!button_pressed && !ditPressed())
+  {
+    int dir = readEncoder();
+    if (dir!=0)                                   // user rotated encoder knob:
+    {
+      lesson += dir;                              // ...so change speed up/down 
+      if (lesson<1) lesson = 1;                   // dont go below 1 
+      if (lesson>kochLevel) lesson = kochLevel;   // dont go above maximum
+      introLesson(lesson);                        // show new lesson number
+    }
+  }
+  return lesson;
+}
+
+void sendKoch()
+{
+  while (!button_pressed) {
+    setTopMenu("Koch lesson");
+    int lesson = getLessonNumber();               // allow user to select lesson
+    if (button_pressed) return;                   // user quit, so sad
+    sendKochLesson(lesson);                       // do the lesson                      
+    setTopMenu("Get 90%? Dit=YES, Dah=NO");       // ask user to score lesson
+    while (!button_pressed) {                     // wait for user response
+       if (ditPressed())                          // dit = user advances to next level
+       {  
+         roger();                                 // acknowledge success
+         if (kochLevel<ELEMENTS(koch))        
+           kochLevel++;                           // advance to next level
+         saveConfig();                            // save it in EEPROM
+         delay(1000);                             // give time for user to release dit
+         break;                                   // go to next lesson
+       }
+       if (dahPressed()) break;                   // dah = repeat same lesson
+    }
+  }
+}
+
+
 //===================================  Receive Menu  ====================================
 
 
@@ -613,7 +702,7 @@ int fileMenu(char menu[][13], int itemCount)      // Display list of files & get
 void sendFile(char* filename)                     // output a file to screen & morse
 {
   const int pageSkip = 250;
-  eraseMenus(); textRow=0; textCol=0;             // clear screen below menu
+  eraseMenus();                                   // clear screen below menu
   button_pressed = false;                         // reset flag for new presses
   File book = SD.open(filename);                  // look for book on sd card
   if (book) {                                     // find it? 
@@ -808,7 +897,9 @@ void flashcards()
   }
 }
 
-
+void twoWay()                                     // wireless QSO between units
+{
+}
 
 
 
@@ -821,6 +912,7 @@ void saveConfig()
   EEPROM.update(2,codeSpeed);                     // save overall code speed in wpm
   EEPROM.update(3,pitch/10);                      // save pitch as 1/10 of value
   EEPROM.update(4,ditPaddle);                     // save pin corresponding to 'dit'
+  EEPROM.write(5,kochLevel);                      // save current Koch lesson #
 }
 
 void loadConfig()
@@ -832,6 +924,7 @@ void loadConfig()
      codeSpeed  = EEPROM.read(2);
      pitch      = EEPROM.read(3)*10;
      ditPaddle  = EEPROM.read(4); 
+     kochLevel  = EEPROM.read(5); 
   } 
 }
 
@@ -842,6 +935,7 @@ void useDefaults()                                // if things get messed up...
   pitch     = DEFAULTPITCH;
   ditPaddle = PADDLE_A;
   dahPaddle = PADDLE_B;
+  kochLevel = 1;
   saveConfig();
   roger();
 }
@@ -961,11 +1055,7 @@ void addCharacter(char c)
      ((c==' ') && (textCol>MAXCOL-7)))            // or at a wordspace thats near end of row?
   {
     textRow++; textCol=0;                         // yes, so advance to beginning of next row
-    if (textRow >= MAXROW)                        // but have we run out of rows?
-    {
-      eraseMenus();                               // yes, so clear screen
-      textRow=0;                                  // and start on first row
-    }
+    if (textRow >= MAXROW) eraseMenus();          // if no more rows, clear & start at top.
   }
 }
 
@@ -974,6 +1064,7 @@ void eraseMenus()                                 // clear the text portion of t
   tft.fillRect(0, TOPDEADSPACE, DISPLAYWIDTH, DISPLAYHEIGHT, BLACK);
   tft.setTextColor(TEXTCOLOR,BLACK);
   tft.setCursor(0,TOPDEADSPACE);
+  textRow=0; textCol=0;                           // start text below the top menu
 }
 
 int getMenuSelection()                            // Display menu system & get user selection
@@ -1125,18 +1216,18 @@ void setup()
 void loop()
 {
   int selection = getMenuSelection();             // get menu selection from user
-  eraseMenus(); textRow=0; textCol=0;             // clear screen below menu
+  eraseMenus();                                   // clear screen below menu
   button_pressed = false;                         // reset flag for new presses
   randomSeed(millis());                           // randomize!
   switch(selection)                               // do action requested by user
   {
-    case 00: sendLetters(); break;
-    case 01: sendWords(); break;
-    case 02: sendFromSD(); break;
-    case 03: sendQSO(); break;
-    case 04: sendNumbers(); break;
-    case 05: sendPunctuation(); break;
-    case 06: sendMixedChars(); break;
+    case 00: sendKoch(); break;
+    case 01: sendLetters(); break;
+    case 02: sendWords(); break;
+    case 03: sendNumbers(); break;
+    case 04: sendMixedChars(); break;
+    case 05: sendFromSD(); break;
+    case 06: sendQSO(); break;
     case 07: sendCallsigns(); break;
 
     case 10: receiveCode(); break;
@@ -1145,6 +1236,7 @@ void loop()
     case 13: copyWords(); break;
     case 14: copyCallsigns(); break;
     case 15: flashcards(); break;
+    case 16: twoWay(); break;
     
     case 20: setCodeSpeed(); break;
     case 21: setCharSpeed(); break;

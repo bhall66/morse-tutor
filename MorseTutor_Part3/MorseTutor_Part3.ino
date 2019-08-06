@@ -6,9 +6,9 @@
        Legal:   Copyright (c) 2019  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
- Description:   Part 4 of the tutorial at w8bh.net  
+ Description:   Part 3 of the tutorial at w8bh.net  
                 Morse Code Demo, using LED & Buzzer outputs.  
-                Builds on Part 4, adding routines for sending
+                Builds on Part 2, adding routines for sending
                 random letters, numbers, words, and callsigns.
    
  **************************************************************************/
