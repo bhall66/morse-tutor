@@ -9,7 +9,7 @@
                Put textfile "morse.txt" on SD card & insert card. 
                File will play over piezo/speaker on PB12
 
-  Connections:  SD_DC to PA4, 
+  Connections:  SD_CS   to PA4 
                 SD_MOSI to PA7
                 SD_MISO to PA6
                 SD_SCK  to PA5 
