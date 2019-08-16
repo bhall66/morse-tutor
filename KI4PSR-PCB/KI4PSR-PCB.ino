@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   05 Aug 2019
+        Date:   15 Aug 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -31,7 +31,8 @@
 #define ENCODER_BUTTON    PB15                    // Rotary Encoder switch -KI4PSR VERSION_0
 #define PADDLE_A          PB8                     // Morse Paddle "dit" -KI4PSR VERSION_0
 #define PADDLE_B          PB7                     // Morse Paddle "dah" -KI4PSR VERSION_0
-#define PIEZO             PA2                     // -KI4PSR VERSION_0  AUDIO OUT 
+#define PIEZO             PA2                     // -KI4PSR VERSION_0  AUDIO OUT
+#define SCREEN_ROTATION     3                     // landscape mode: use '1' or '3' 
 
 //===================================  Morse Code Constants =============================
 #define MYCALL          "W8BH"                    // your callsign for splash scrn & QSO
@@ -1182,7 +1183,7 @@ void initMorse()
 void initScreen()
 {
   tft.begin();                                    // initialize screen object
-  tft.setRotation(3);                             // landscape mode: use '1' or '3'
+  tft.setRotation(SCREEN_ROTATION);               // landscape mode: use '1' or '3'
   tft.fillScreen(BLACK);                          // start with blank screen
 }
 
