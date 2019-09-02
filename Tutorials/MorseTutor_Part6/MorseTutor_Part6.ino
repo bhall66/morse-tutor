@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   11 Jul 2019
+        Date:   02 Sep 2019
     Hardware:   STM32F103C "Blue Pill", Piezo Buzzer, 2.2" ILI9341 LCD,
                 Adafruit #477 rotary encoder or similar
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
@@ -18,16 +18,17 @@
 #include "Adafruit_ILI9341.h"
 
 //===================================  Hardware Connections =============================
-#define TFT_DC            PA0                     // LCD "DC" pin
-#define TFT_CS            PA1                     // LCD "CS" pin
-#define TFT_RST           PA2                     // LCD "RST" pin
-#define ENCODER_A        PC15                     // Rotary Encoder output A
-#define ENCODER_B        PC14                     // Rotary Encoder output B
-#define LED              PC13                     // onboard LED pin
-#define ENCODER_BUTTON    PB9                     // Rotary Encoder switch
-#define PADDLE_A         PB14                     // Morse Paddle "dit"
-#define PADDLE_B         PB13                     // Morse Paddle "dah"
-#define PIEZO            PB12                     // pin attached to piezo element
+#define TFT_DC            PA0                     // Display "DC" pin
+#define TFT_CS            PA1                     // Display "CS" pin
+#define TFT_MOSI          PA7                     // Display "MOSI" pin
+#define TFT_SCK           PA5                     // Display "SCK" pin    
+#define ENCODER_A         PA9                     // Rotary Encoder output A
+#define ENCODER_B         PA8                     // Rotary Encoder output B
+#define ENCODER_BUTTON    PB15                    // Rotary Encoder switch
+#define PADDLE_A          PB8                     // Morse Paddle "dit"
+#define PADDLE_B          PB7                     // Morse Paddle "dah"
+#define AUDIO             PA2                     // Audio output
+#define LED               PC13                    // onboard LED pin
 
 //===================================  Morse Code Constants =============================
 #define CODESPEED          13                     // speed in Words per Minute
@@ -78,7 +79,7 @@ char *menu1[]    = {" Practice", " CopyCat ", "Flashcard", " Exit    "};
 char *menu2[]    = {" Speed   ", "CharSpeed", " Chk Spd ", " Tone    ", " Dit Pad ", " Defaults", " Exit    "};
 
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 char *commonWords = "a an the this these that some all any every who which what such other I me my we us our you your he him his she her it its they them their man men people time work well May will can one two great little first at by on upon over before to from with in into out for of about up when then now how so like as well very only no not more there than and or if but be am is are was were been has have had may can could will would shall should must say said like go come do made work";
 char *hamWords[]  = {"DE", "TNX FER", "BT", "WX", "HR", "TEMP", "ES", "RIG", "ANT", "DIPOLE", "VERTICAL", // 0-10
@@ -164,19 +165,19 @@ void characterSpace() {
 
 void dit() {
   digitalWrite(LED,0);                       // turn on LED
-  tone(PIEZO,PITCH);                         // and turn on sound
+  tone(AUDIO,PITCH);                         // and turn on sound
   ditSpaces();                               // wait for period of 1 dit
   digitalWrite(LED,1);                       // turn off LED
-  noTone(PIEZO);                             // and turn off sound
+  noTone(AUDIO);                             // and turn off sound
   ditSpaces();                               // space between code elements
 }
 
 void dah() {
   digitalWrite(LED,0);                       // turn on LED
-  tone(PIEZO,PITCH);                         // and turn on sound
+  tone(AUDIO,PITCH);                         // and turn on sound
   ditSpaces(3);                              // length of dah = 3 dits
   digitalWrite(LED,1);                       // turn off LED
-  noTone(PIEZO);                             // and turn off sound
+  noTone(AUDIO);                             // and turn off sound
   ditSpaces();                               // space between code elements
 }
 

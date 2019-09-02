@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   07/09/2019
+        Date:   02 Sep 2019
     Hardware:   STM32F103C "Blue Pill", 
                 Adafruit #477 rotary encoder or similar
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
@@ -19,9 +19,9 @@
 // The following defines specify which pins are attached to the rotary encoder
 // Make sure that each of these can be used as an external interrupt.
 
-#define ENCODER_A         PC15                    // Rotary Encoder output A
-#define ENCODER_B         PC14                    // Rotary Encoder output A
-#define ENCODER_BUTTON    PB9                     // Rotary Encoder switch
+#define ENCODER_A         PA9                     // Rotary Encoder output A
+#define ENCODER_B         PA8                     // Rotary Encoder output B
+#define ENCODER_BUTTON    PB15                    // Rotary Encoder switch
 
 #define SHORTFLASH        100                     // duration in mS of short LED flash
 #define LONGFLASH         300                     // duration in mS of long LED flash

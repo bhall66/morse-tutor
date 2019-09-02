@@ -1,6 +1,6 @@
 /**************************************************************************
     Author:    Bruce E. Hall, w8bh.net
-    Date:      11 Jul 2019
+    Date:      02 Sepl 2019
     Hardware:  STM32F103C "Blue Pill" with Piezo Buzzer
       Legal:   Copyright (c) 2019  Bruce E. Hall.
                Open Source under the terms of the MIT License. 
@@ -12,7 +12,7 @@
 
 //===================================  Hardware Connections =============================
 #define LED              PC13                     // onboard LED pin
-#define PIEZO            PB12                     // pin attached to piezo element
+#define AUDIO            PA2                      // pin attached to piezo element
 
 //===================================  Morse Code Constants =============================
 #define CODESPEED   13                            // speed in Words per Minute
@@ -101,19 +101,19 @@ void wordSpace()
 
 void dit() {
   digitalWrite(LED,0);                            // turn on LED
-  tone(PIEZO,PITCH);                              // and turn on sound
+  tone(AUDIO,PITCH);                              // and turn on sound
   ditSpaces();
   digitalWrite(LED,1);                            // turn off LED
-  noTone(PIEZO);                                  // and turn off sound
+  noTone(AUDIO);                                  // and turn off sound
   ditSpaces();                                    // space between code elements
 }
 
 void dah() {
   digitalWrite(LED,0);                            // turn on LED
-  tone(PIEZO,PITCH);                              // and turn on sound
+  tone(AUDIO,PITCH);                              // and turn on sound
   ditSpaces(3);                                   // length of dah = 3 dits
   digitalWrite(LED,1);                            // turn off LED
-  noTone(PIEZO);                                  // and turn off sound
+  noTone(AUDIO);                                  // and turn off sound
   ditSpaces();                                    // space between code elements
 }
 

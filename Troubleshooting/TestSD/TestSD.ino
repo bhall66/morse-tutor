@@ -1,13 +1,13 @@
 /**************************************************************************
     Author:    Bruce E. Hall, w8bh.net
-    Date:      07 Jul 2019
+    Date:      02 Sep 2019
     Hardware:  STM32F103C "Blue Pill" with Piezo Buzzer
       Legal:   Copyright (c) 2019  Bruce E. Hall.
                Open Source under the terms of the MIT License. 
     
  Description:  Tests the SD card input. 
                Put textfile "morse.txt" on SD card & insert card. 
-               File will play over piezo/speaker on PB12
+               File will play over piezo/speaker on PA2
 
   Connections:  SD_CS   to PA4 
                 SD_MOSI to PA7
@@ -24,7 +24,7 @@
 #define DITPERIOD   1200/CODESPEED
 #define PITCH       1000                          // pitch in Hz of morse audio
 #define LED         PC13                          // onboard LED pin
-#define PIEZO       PB12                          // pin attached to piezo element
+#define AUDIO             PA2                     // Audio output
 
 byte morse[] = {                                  // Each character is encoded into an 8-bit byte:
   0b01001010,        // ! exclamation        
@@ -105,19 +105,19 @@ void wordSpace()
 
 void dit() {
   digitalWrite(LED,0);                            // turn on LED
-  tone(PIEZO,PITCH);                              // and turn on sound
+  tone(AUDIO,PITCH);                              // and turn on sound
   ditSpaces();
   digitalWrite(LED,1);                            // turn off LED
-  noTone(PIEZO);                                  // and turn off sound
+  noTone(AUDIO);                                  // and turn off sound
   ditSpaces();                                    // space between code elements
 }
 
 void dah() {
   digitalWrite(LED,0);                            // turn on LED
-  tone(PIEZO,PITCH);                              // and turn on sound
+  tone(AUDIO,PITCH);                              // and turn on sound
   ditSpaces(3);                                   // length of dah = 3 dits
   digitalWrite(LED,1);                            // turn off LED
-  noTone(PIEZO);                                  // and turn off sound
+  noTone(AUDIO);                                  // and turn off sound
   ditSpaces();                                    // space between code elements
 }
 

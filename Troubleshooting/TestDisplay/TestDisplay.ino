@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   26 Jun 2019
+        Date:   02 Sep 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 LCD
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
     
@@ -10,7 +10,7 @@
   pin1 "VCC" to 3.3V    pin6 "MOSI" to PA7
   pin2 "GND" to gnd     pin7 "SCK " to PA5
   pin3 "CS " to PA1     pin8 "LED " to 3.3V
-  pin4 "RST" to PA2     pin9 "MISO" to PA6
+  pin4 "RST" to 3.3V    pin9  n/c
   pin5 "DC"  to PA0
 
    
@@ -21,7 +21,7 @@
 
 #define TFT_DC         PA0
 #define TFT_CS         PA1
-#define TFT_RST        PA2
+
 
 //===================================  Color Constants ==================================
 #define BLACK          0x0000
@@ -29,7 +29,7 @@
 #define YELLOW         0xFFE0
 #define WHITE          0xFFFF
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 void setup() {
   tft.begin();                                    // initialize screen object

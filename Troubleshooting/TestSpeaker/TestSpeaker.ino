@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   07/09/2019
+        Date:   02 Sep 2019
     Hardware:   STM32F103C "Blue Pill", 
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -13,9 +13,9 @@
  **************************************************************************/
 
 #define LED                PC13                   // pin for onboard LED
-#define SPEAKER            PB12                   // pin attached to speaker
+#define SPEAKER            PB2                    // pin attached to speaker
 #define PITCH              1000                   // tone pitch, in Hz
-#define DURATION            500                   // tone duration, in mS
+#define DURATION           500                    // tone duration, in mS
 
 
 void beep()

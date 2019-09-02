@@ -1,24 +1,24 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   07 Jul 2019
+        Date:   02 Sep 2019
     Hardware:   STM32F103C "Blue Pill" with Piezo Buzzer
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
  Description:   Use Paddles to send Morse Code.
-                Connect piezo to PB12.  Other lead to ground.
-                Connect paddles to PB13 & PB14.  Other lead to ground.
+                Connect piezo to PA2.  Other lead to ground.
+                Connect paddles to PB8 & PB9.  Other lead to ground.
    
  **************************************************************************/
 
-#define LED         PC13                     // onboard LED pin
-#define PIEZO       PB12                     // pin attached to piezo element
-#define PADDLE_A    PB13                     // Morse Paddle "dit"
-#define PADDLE_B    PB14                     // Morse Paddle "dah"
-#define CODESPEED   13                       // speed in Words per Minute
-#define PITCH       1000                     // pitch in Hz of morse audio
-#define DITPERIOD   1200/CODESPEED           // period of dit, in milliseconds
+#define PADDLE_A          PB8                // Morse Paddle "dit"
+#define PADDLE_B          PB7                // Morse Paddle "dah"
+#define AUDIO             PA2                // Audio output
+#define LED               PC13               // onboard LED pin
+#define CODESPEED         13                 // speed in Words per Minute
+#define PITCH             1000               // pitch in Hz of morse audio
+#define DITPERIOD         1200/CODESPEED     // period of dit, in milliseconds
 
 
 void ditSpaces(int spaces=1) {               // user specifies #dits to wait
@@ -28,19 +28,19 @@ void ditSpaces(int spaces=1) {               // user specifies #dits to wait
 
 void dit() {
   digitalWrite(LED,0);                       // turn on LED
-  tone(PIEZO,PITCH);                         // and turn on sound
+  tone(AUDIO,PITCH);                         // and turn on sound
   ditSpaces();                               // wait for period of 1 dit
   digitalWrite(LED,1);                       // turn off LED
-  noTone(PIEZO);                             // and turn off sound
+  noTone(AUDIO);                             // and turn off sound
   ditSpaces();                               // space between code elements
 }
 
 void dah() {
   digitalWrite(LED,0);                       // turn on LED
-  tone(PIEZO,PITCH);                         // and turn on sound
+  tone(AUDIO,PITCH);                         // and turn on sound
   ditSpaces(3);                              // length of dah = 3 dits
   digitalWrite(LED,1);                       // turn off LED
-  noTone(PIEZO);                             // and turn off sound
+  noTone(AUDIO);                             // and turn off sound
   ditSpaces();                               // space between code elements
 }
 
