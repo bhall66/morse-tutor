@@ -45,6 +45,7 @@
 #define MAXPITCH         2800                     // highest allowed pitch
 #define MINPITCH          300                     // how low can you go
 #define WORDSIZE            5                     // number of chars per random word
+#define MAXWORDSPACES      99                     // maximum word delay, in spaces
 #define FLASHCARDDELAY   2000                     // wait in mS between cards
 #define ENCODER_TICKS       3                     // Ticks required to register movement
 #define FNAMESIZE          15                     // max size of a filename
@@ -182,6 +183,7 @@ int dahPaddle   = PADDLE_B;
 int pitch       = DEFAULTPITCH;
 int kochLevel   = 1;
 int score       = 0;
+int xWordSpaces = 0;
 bool usePaddles = false;
 bool paused     = false;
 
@@ -342,7 +344,8 @@ void characterSpace()
 void wordSpace()
 {
   delay(4*extracharDit());                        // 7 total (last char includes 3)
-  //ditSpaces(4);                                 
+  if (xWordSpaces)                                // any user-specified delays?
+    delay(7*extracharDit()*xWordSpaces);          // yes, so additional wait between words                               
 }
 
 void dit() {                                      // send a dit by:
@@ -1022,6 +1025,7 @@ void saveConfig()
   EEPROM.update(4,ditPaddle);                     // save pin corresponding to 'dit'
   EEPROM.update(5,kochLevel);                     // save current Koch lesson #
   EEPROM.update(6,usePaddles);                    // save key type
+  EEPROM.update(7,xWordSpaces);                   // save extra word spaces
 }
 
 void loadConfig()
@@ -1029,24 +1033,28 @@ void loadConfig()
   int flag = EEPROM.read(0);                      // saved values been saved before?
   if (flag==42)                                   // yes, so load saved parameters
   {
-     charSpeed  = EEPROM.read(1);
-     codeSpeed  = EEPROM.read(2);
-     pitch      = EEPROM.read(3)*10;
-     ditPaddle  = EEPROM.read(4); 
-     kochLevel  = EEPROM.read(5);
-     usePaddles = EEPROM.read(6);  
+     charSpeed   = EEPROM.read(1);
+     codeSpeed   = EEPROM.read(2);
+     pitch       = EEPROM.read(3)*10;
+     ditPaddle   = EEPROM.read(4); 
+     kochLevel   = EEPROM.read(5);
+     usePaddles  = EEPROM.read(6);
+     xWordSpaces = EEPROM.read(7);  
   } 
+  if (xWordSpaces>MAXWORDSPACES) 
+     xWordSpaces = 0;
 }
 
 void useDefaults()                                // if things get messed up...
 {
-  charSpeed  = DEFAULTSPEED;
-  codeSpeed  = DEFAULTSPEED;
-  pitch      = DEFAULTPITCH;
-  ditPaddle  = PADDLE_A;
-  dahPaddle  = PADDLE_B;
-  kochLevel  = 1;
-  usePaddles = true;
+  charSpeed   = DEFAULTSPEED;
+  codeSpeed   = DEFAULTSPEED;
+  pitch       = DEFAULTPITCH;
+  ditPaddle   = PADDLE_A;
+  dahPaddle   = PADDLE_B;
+  kochLevel   = 1;
+  usePaddles  = true;
+  xWordSpaces = 0;
   saveConfig();
   roger();
 }
@@ -1106,10 +1114,38 @@ void setFarnsworth()
   ditPeriod = intracharDit();                     // adjust dit length
 }
 
+void setExtraWordDelay()                          // add extra word spacing
+{
+  const int x=240,y=150;                          // screen posn for speed display
+  tft.setTextSize(2);
+  tft.println("\n\n\nExtra Word Delay");
+  tft.print("(Spaces):");
+  tft.setTextSize(4);
+  tft.setCursor(x,y);
+  tft.print(xWordSpaces);                         // display current space
+  button_pressed = false;
+  while (!button_pressed)
+  {
+    int dir = readEncoder();
+    if (dir!=0)                                   // user rotated encoder knob:
+    {
+      xWordSpaces += dir;                         // ...so change value up/down          
+      if (xWordSpaces<0) 
+        xWordSpaces = 0;                          // dont go below zero
+      if (xWordSpaces>MAXWORDSPACES)
+        xWordSpaces = MAXWORDSPACES;              // dont go above max
+      tft.fillRect(x,y,50,50,BLACK);              // erase old speed
+      tft.setCursor(x,y);
+      tft.print(xWordSpaces);                     // and show new speed    
+    }
+  }                
+}
+
 void setSpeed()
 {
   setCodeSpeed();                                 // get code speed
   setFarnsworth();                                // get farnsworth delay
+  setExtraWordDelay();                            // thank you Mark AJ6CU!  
   saveConfig();                                   // save the new speed values
   roger();                                        // and acknowledge  
 }
