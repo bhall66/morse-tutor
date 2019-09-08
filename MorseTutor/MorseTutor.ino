@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   02 Sep 2019
+        Date:   08 Sep 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -1145,7 +1145,7 @@ void setSpeed()
 {
   setCodeSpeed();                                 // get code speed
   setFarnsworth();                                // get farnsworth delay
-  setExtraWordDelay();                            // thank you Mark AJ6CU!  
+  setExtraWordDelay();                            // Thank you Mark AJ6CU!  
   saveConfig();                                   // save the new speed values
   roger();                                        // and acknowledge  
 }
