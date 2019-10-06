@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   08 Sep 2019
+        Date:   05 Oct 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -16,7 +16,7 @@
 
 //===================================  INCLUDES ========================================= 
 #include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+#include "Adafruit_ILI9341_STM.h"                 // for non-STM32 boards, use "Adafruit_ILI9341.h"
 #include "EEPROM.h"
 #include "SD.h"
 
@@ -37,7 +37,6 @@
 #define SCREEN_ROTATION     3                     // landscape mode: use '1' or '3' 
 
 //===================================  Morse Code Constants =============================
-#define MYCALL          "W8BH"                    // your callsign for splash scrn & QSO
 #define DEFAULTSPEED       13                     // character speed in Words per Minute
 #define MAXSPEED           50                     // fastest morse speed in WPM
 #define MINSPEED            3                     // slowest morse speed in WPM
@@ -79,7 +78,9 @@
 #define TEXTCOLOR      YELLOW                     // Default non-menu text color
 #define ELEMENTS(x) (sizeof(x) / sizeof(x[0]))    // Handy macro for determining array sizes
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
+Adafruit_ILI9341_STM tft = Adafruit_ILI9341_STM(TFT_CS, TFT_DC);
+// for non-STM32 boards, use the following line instead:
+// Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 //===================================  Rotary Encoder Variables =========================
 volatile int      rotaryCounter    = 0;           // "position" of rotary encoder (increments CW) 
@@ -186,13 +187,14 @@ int score       = 0;
 int xWordSpaces = 0;
 bool usePaddles = false;
 bool paused     = false;
+char myCall[10];
 
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
 char *menu0[]    = {" Koch    ", " Letters ", " Words   ", " Numbers ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " Exit    "};
 char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", " Flashcrd", " Two-Way ", " Exit    "};
-char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Defaults", " Exit    "};
+char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Callsign", " Defaults", " Exit    "};
 
 
 //===================================  Rotary Encoder Code  =============================
@@ -645,7 +647,7 @@ void sendQSO()
   char temp[20];                              
   char qso[300];                                  // string to hold entire QSO
   randomCallsign(otherCall);
-  strcpy(qso,MYCALL);                             // start of QSO
+  strcpy(qso,myCall);                             // start of QSO
   strcat(qso," de ");
   strcat(qso,otherCall);                          // another ham is calling you
   strcat(qso," K  TNX FER CALL= UR RST ");
@@ -669,7 +671,7 @@ void sendQSO()
   strcat(qso,"== WX HERE IS ");                   // add weather
   strcat(qso,weather[random(0,ELEMENTS(weather))]);     
   strcat(qso,"= SO HW CPY? ");                    // back to other ham
-  strcat(qso,MYCALL);
+  strcat(qso,myCall);
   strcat(qso," de ");
   strcat(qso,otherCall);
   strcat(qso," KN");
@@ -1026,6 +1028,8 @@ void saveConfig()
   EEPROM.update(5,kochLevel);                     // save current Koch lesson #
   EEPROM.update(6,usePaddles);                    // save key type
   EEPROM.update(7,xWordSpaces);                   // save extra word spaces
+  for (int i=0; i<10; i++)                        // save callsign,
+    EEPROM.update(8+i,myCall[i]);                 // one letter at a time
 }
 
 void loadConfig()
@@ -1039,10 +1043,14 @@ void loadConfig()
      ditPaddle   = EEPROM.read(4); 
      kochLevel   = EEPROM.read(5);
      usePaddles  = EEPROM.read(6);
-     xWordSpaces = EEPROM.read(7);  
+     xWordSpaces = EEPROM.read(7);
+     for (int i=0; i<10; i++)
+       myCall[i] = EEPROM.read(8+i);  
   } 
   if (xWordSpaces>MAXWORDSPACES) 
      xWordSpaces = 0;
+  if (!isAlphaNumeric(myCall[0]))                 // simple test for valid callsign
+     strcpy(myCall,"W8BH");
 }
 
 void useDefaults()                                // if things get messed up...
@@ -1055,6 +1063,7 @@ void useDefaults()                                // if things get messed up...
   kochLevel   = 1;
   usePaddles  = true;
   xWordSpaces = 0;
+  strcpy(myCall,"W8BH");  
   saveConfig();
   roger();
 }
@@ -1198,6 +1207,26 @@ void configKey()
   usePaddles = dahPressed();                      // dah = paddle input
   saveConfig();                                   // save it
   roger();   
+}
+
+void setCallsign() {
+  char ch, response[20];   
+  tft.print("\n Enter Callsign:");
+  tft.setTextColor(CYAN);                                                      
+  strcpy(response,"");                            // start with empty response
+  textRow=2; textCol=8;                           // set position of response
+  while (!button_pressed && !ditPressed()         // wait until user is ready
+    && !dahPressed()) ;
+  do {                                            // user has started keying...
+    ch = morseInput();                            // get a character
+    if (ch!=' ') addChar(response,ch);            // add it to the response
+    addCharacter(ch);                             // and put it on screen
+  } while (ch!=' ');                              // space = word timeout
+  if (button_pressed) return;                     // leave without saving
+  strcpy(myCall,response);                        // copy user input to callsign
+  delay(1000);                                    // allow user to see result
+  saveConfig();                                   // save it
+  roger();  
 }
 
 
@@ -1362,7 +1391,7 @@ void splashScreen()                               // not splashy at all!
   tft.setTextSize(3);
   tft.setTextColor(TEXTCOLOR);
   tft.setCursor(100, 50); 
-  tft.print(MYCALL);                              // add your callsign (set MYCALL at top of sketch)
+  tft.print(myCall);                             // display user's callsign
   tft.setTextColor(CYAN);
   tft.setCursor(15, 90);      
   tft.print("Morse Code Tutor");                  // add title
@@ -1414,7 +1443,8 @@ void loop()
     case 21: checkSpeed(); break;
     case 22: setPitch(); break;
     case 23: configKey(); break;
-    case 24: useDefaults(); break;
+    case 24: setCallsign(); break;
+    case 25: useDefaults(); break;
     default: ;
   }
 }
