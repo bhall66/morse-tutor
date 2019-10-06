@@ -16,7 +16,7 @@
 
 //===================================  INCLUDES ========================================= 
 #include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341_STM.h"                 // for non-STM32 boards, use "Adafruit_ILI9341.h"
+#include "Adafruit_ILI9341.h"                 
 #include "EEPROM.h"
 #include "SD.h"
 
@@ -78,9 +78,7 @@
 #define TEXTCOLOR      YELLOW                     // Default non-menu text color
 #define ELEMENTS(x) (sizeof(x) / sizeof(x[0]))    // Handy macro for determining array sizes
 
-Adafruit_ILI9341_STM tft = Adafruit_ILI9341_STM(TFT_CS, TFT_DC);
-// for non-STM32 boards, use the following line instead:
-// Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 //===================================  Rotary Encoder Variables =========================
 volatile int      rotaryCounter    = 0;           // "position" of rotary encoder (increments CW) 
@@ -187,7 +185,7 @@ int score       = 0;
 int xWordSpaces = 0;
 bool usePaddles = false;
 bool paused     = false;
-char myCall[10];
+char myCall[10] = "W8BH";
 
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
@@ -1045,12 +1043,26 @@ void loadConfig()
      usePaddles  = EEPROM.read(6);
      xWordSpaces = EEPROM.read(7);
      for (int i=0; i<10; i++)
-       myCall[i] = EEPROM.read(8+i);  
+       myCall[i] = EEPROM.read(8+i); 
+     checkConfig();                               // ensure loaded settings are valid 
   } 
-  if (xWordSpaces>MAXWORDSPACES) 
+
+}
+
+void checkConfig()                                // ensure config settings are valid
+{
+  if ((charSpeed<MINSPEED)||(charSpeed>MAXSPEED)) // validate character speed
+    charSpeed = DEFAULTSPEED;                     
+  if ((codeSpeed<MINSPEED)||(codeSpeed>MAXSPEED)) // validate code speed
+    codeSpeed = DEFAULTSPEED;
+  if ((pitch<MINPITCH)||(pitch>MAXPITCH))         // validate pitch
+    pitch = DEFAULTPITCH;
+  if ((kochLevel<0)||(kochLevel>ELEMENTS(koch)))  // validate koch lesson number
+    kochLevel = 0;
+  if (xWordSpaces>MAXWORDSPACES)                  // validate word spaces
      xWordSpaces = 0;
-  if (!isAlphaNumeric(myCall[0]))                 // simple test for valid callsign
-     strcpy(myCall,"W8BH");
+  if (!isAlphaNumeric(myCall[0]))                 // validate callsign
+     strcpy(myCall,"W8BH"); 
 }
 
 void useDefaults()                                // if things get messed up...
