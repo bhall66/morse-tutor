@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   05 Oct 2019
+        Date:   16 Oct 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -48,7 +48,9 @@
 #define FLASHCARDDELAY   2000                     // wait in mS between cards
 #define ENCODER_TICKS       3                     // Ticks required to register movement
 #define FNAMESIZE          15                     // max size of a filename
-#define MAXFILES           20                     // max number of SD files recognized 
+#define MAXFILES           20                     // max number of SD files recognized
+#define IAMBIC_A            1                     // Iambic Keyer Mode B 
+#define IAMBIC_B            2                     // Iambic Keyer Mode A
 
 //===================================  Color Constants ==================================
 #define BLACK          0x0000
@@ -174,24 +176,29 @@ byte morse[] = {                                  // Each character is encoded i
   0b00011100         // Z
 };
 
-int charSpeed   = DEFAULTSPEED;
-int codeSpeed   = DEFAULTSPEED;
-int ditPeriod   = 100;
-int ditPaddle   = PADDLE_A;
-int dahPaddle   = PADDLE_B;
-int pitch       = DEFAULTPITCH;
-int kochLevel   = 1;
-int score       = 0;
-int xWordSpaces = 0;
-bool usePaddles = false;
-bool paused     = false;
+int charSpeed   = DEFAULTSPEED;                   // speed at which characters are sent, in WPM
+int codeSpeed   = DEFAULTSPEED;                   // overall code speed, in WPM
+int ditPeriod   = 100;                            // length of a dit, in milliseconds
+int ditPaddle   = PADDLE_A;                       // digital pin attached to dit paddle
+int dahPaddle   = PADDLE_B;                       // digital pin attached to dah paddle
+int pitch       = DEFAULTPITCH;                   // frequency of audio output, in Hz
+int kochLevel   = 1;                              // current Koch lesson #
+int score       = 0;                              // copy challange score
+int hits        = 0;                              // copy challange correct #
+int misses      = 0;                              // copy channange incorrect #
+int xWordSpaces = 0;                              // extra spaces between words
+int keyerMode   = IAMBIC_B;                       // current keyer mode
+bool usePaddles = false;                          // if true, using paddles; if false, straight key
+bool paused     = false;                          // if true, morse output is paused
+bool ditRequest = false;                          // dit memory for iambic sending
+bool dahRequest = false;                          // dah memory for iambic sending
 char myCall[10] = "W8BH";
 
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
 char *menu0[]    = {" Koch    ", " Letters ", " Words   ", " Numbers ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " Exit    "};
-char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", " Flashcrd", " Two-Way ", " Exit    "};
+char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", " Flashcrd", " Head Cpy", " Two-Way ", " Exit    "};
 char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Callsign", " Defaults", " Exit    "};
 
 
@@ -328,17 +335,11 @@ int intracharDit()
   return (1200/charSpeed);
 }
 
-void ditSpaces(int spaces=1) {                    // user specifies #dits to wait
-  for (int i=0; i<spaces; i++)                    // count the dits...
-    delay(ditPeriod);                             // no action, just mark time
-}
-
 void characterSpace()
 {
   int fudge = (charSpeed/codeSpeed)-1;            // number of fast dits needed to convert
   delay(fudge*ditPeriod);                         // single intrachar dit to slower extrachar dit
-  delay(2*extracharDit());                        // 3 total (last element includes 1)
-  //ditSpaces(2);                                 
+  delay(2*extracharDit());                        // 3 total (last element includes 1)                                
 }
 
 void wordSpace()
@@ -348,18 +349,36 @@ void wordSpace()
     delay(7*extracharDit()*xWordSpaces);          // yes, so additional wait between words                               
 }
 
-void dit() {                                      // send a dit by:
-  keyDown();                                      // turn on sound & led
-  ditSpaces();                                    // wait
+void dit() {                                      // send a dit
+  ditRequest = false;                             // clear any pending request
+  keyDown();                                      // turning on sound & led
+  int finished = millis()+ditPeriod;              // wait for duration of dit
+  while (millis()<finished) {                     // check dah paddle while dit sounding 
+    if ((keyerMode==IAMBIC_B) && dahPressed())    // if iambic B & dah was pressed,    
+      dahRequest = true;                          // request it for next element
+  }
   keyUp();                                        // turn off sound & led
-  ditSpaces();                                    // space between code elements
+  finished = millis()+ditPeriod;                  // wait before next element sent
+  while (millis()<finished) {                     // check dah paddle while waiting
+    if (keyerMode && dahPressed())                // if iambic A or B & dah was pressed,
+      dahRequest = true;                          // request it for next element
+  }
 }
 
-void dah() {                                      // send a dah by:
+void dah() {                                      // send a dah
+  dahRequest = false;                             // clear any pending request
   keyDown();                                      // turn on sound & led
-  ditSpaces(3);                                   // length of dah = 3 dits
+  int finished = millis() + ditPeriod*3;          // wait for duration of dah
+  while (millis()<finished) {                     // check dit paddle while dah sounding
+    if ((keyerMode==IAMBIC_B) && ditPressed())    // if iambic B & dit was pressed    
+      ditRequest = true;                          // request it for next element 
+  }
   keyUp();                                        // turn off sound & led
-  ditSpaces();                                    // space between code elements
+  finished = millis()+ditPeriod;                  // wait before next element sent
+  while (millis()<finished) {                     // check dit paddle while waiting
+    if (keyerMode && ditPressed())                // if iambic A or B & dit was pressed,
+      ditRequest = true;                          // request it for next element
+  }
 }
 
 void sendElements(int x) {                        // send string of bits as Morse      
@@ -400,6 +419,11 @@ void sendCharacter(char c) {                      // send a single ASCII charact
 void sendString (char *ptr) {             
   while (*ptr)                                    // send the entire string
     sendCharacter(*ptr++);                        // one character at a time
+}
+
+void sendMorseWord (char *ptr) {             
+  while (*ptr)                                    // send the entire word
+    sendElements(morse[*ptr++ - 33]);             // each char in Morse - no display
 }
 
 void displayWPM ()
@@ -812,20 +836,22 @@ char paddleInput()                                // monitor paddles & return a 
   unsigned long start = millis();
   while (!button_pressed)
   {
-    if (ditPressed())                             // user pressed dit paddle:
+    if (ditRequest ||                             // dit was requested
+      (ditPressed()&&!dahRequest))                // or user now pressing it             
     {
       dit();                                      // so sound it out
       code += (1<<bit++);                         // add a '1' element to code
       start = millis();                           // and reset timeout.
     }
-    if (dahPressed())                             // user pressed dah paddle:
+    if (dahRequest ||                             // dah was requested
+      (dahPressed()&&!ditRequest))                // or user now pressing it
     {
       dah();                                      // so sound it tout
       bit++;                                      // add '0' element to code
       start = millis();                           // and reset the timeout.
     }
     int wait = millis()-start;
-    if (bit && (wait > ditPeriod*2))              // waited for more than a dit
+    if (bit && (wait > ditPeriod))                // waited for more than a dit
     {                                             // so that must be end of character:
       code += (1<<bit);                           // add stop bit
       int result = decode(code);                  // look up code in morse array
@@ -944,6 +970,17 @@ void copyWords()                                  // show a callsign & see if us
   }
 }
 
+void headCopy()                                  // show a callsign & see if user can copy it
+{
+  char text[10]; 
+  while (!button_pressed)                      
+  { 
+    int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
+    strcpy(text,words[index]);                    // pick a random word       
+    mimic2(text);                                 // and ask user to copy it
+  }
+}
+
 void encourageUser()                              // helper fn for showScore()
 {
   char *phrases[]= {"Good Job", "Keep Going",     // list of phrases to display
@@ -955,28 +992,41 @@ void encourageUser()                              // helper fn for showScore()
   sendString(phrases[choice]);                    // show it and send it  
 }
 
-void showScore()                                  // helper fn for mimick()
+void displayNumber(int num, int color,            // show large number on screen
+    int x, int y, int wd, int ht)                 // specify x,y and width,height of box
+{
+  int textSize = (num>99)?5:6;                    // use smaller text for 3 digit scores
+  tft.setCursor(x+15,y+20);                       // position text within colored box
+  tft.setTextSize(textSize);                      // use big text,
+  tft.setTextColor(BLACK,color);                  // in inverted font,
+  tft.fillRect(x,y,wd,ht,color);                  // on selected background
+  tft.print(num);                                 // show the number
+  tft.setTextSize(2);                             // resume usual size
+  tft.setTextColor(TEXTCOLOR,BLACK);              // resume usual colors  
+}
+  
+void showScore()                                  // helper fn for mimic()
 {
   const int x=200,y=50,wd=105,ht=80;              // posn & size of scorecard
   int bkColor = (score>0)?GREEN:RED;              // back-color green unless score 0
-  int textSize = (score>99)?5:6;                  // use smaller text for 3 digit scores
-  tft.setCursor(x+15,y+20);                       // position text within scorecard
-  tft.setTextSize(textSize);                      // use big text,
-  tft.setTextColor(BLACK,bkColor);                // in inverted font,
-  tft.fillRect(x,y,wd,ht,bkColor);                // on selected background
-  tft.print(score);                               // show the score
-  tft.setTextSize(2);                             // resume usual size
-  tft.setTextColor(TEXTCOLOR,BLACK);              // resume usual colors
+  displayNumber(score,bkColor,x,y,wd,ht);         // show it!
   encourageUser();                                // show encouraging message periodically                                
+}
+
+void showHitsAndMisses(int hits, int misses)      // helper fn for mimic2()
+{                      
+  const int x=200,y1=50,y2=140,wd=105,ht=80;      // posn & size of scorecard             
+  displayNumber(hits,GREEN,x,y1,wd,ht);           // show the hits in green
+  displayNumber(misses,RED,x,y2,wd,ht);           // show misses in red                               
 }
 
 void mimic(char *text)
 {
   char ch, response[20];                                                          
-  textRow=1; textCol=10;                          // set position of text 
+  textRow=1; textCol=6;                           // set position of text 
   sendString(text);                               // display text & morse it
   strcpy(response,"");                            // start with empty response
-  textRow=2; textCol=10;                          // set position of response
+  textRow=2; textCol=6;                           // set position of response
   while (!button_pressed && !ditPressed()         // wait until user is ready
     && !dahPressed()) ;
   do {                                            // user has started keying...
@@ -991,6 +1041,49 @@ void mimic(char *text)
   showScore();                                    // display score for user
   delay(FLASHCARDDELAY);                          // wait between attempts
   eraseMenus();                                   // erase screen for next attempt
+}
+
+void hitTone()
+{
+  tone(AUDIO,440); delay(150);
+  tone(AUDIO,600); delay(200);
+  noTone(AUDIO);
+}
+
+void missTone()
+{
+  tone(AUDIO,200); delay(200);
+  noTone(AUDIO);
+}
+
+void mimic2(char *text)                           // used by head-copy feature
+{
+  char ch, response[20]; bool correct;   
+  do {                                            // repeat same word until correct                                            
+    sendMorseWord(text);                          // morse the text, NO DISPLAY
+    strcpy(response,"");                          // start with empty response
+    textRow=2; textCol=6;                         // set position of response
+    while (!button_pressed && !ditPressed()       // wait until user is ready
+      && !dahPressed()) ;
+    do {                                          // user has started keying...
+      ch = morseInput();                          // get a character
+      if (ch!=' ') addChar(response,ch);          // add it to the response
+      addCharacter(ch);                           // and put it on screen
+    } while (ch!=' ');                            // space = word timeout
+    if (button_pressed) return;                   // leave without scoring
+    correct = !strcmp(text,response);             // did user match the text?
+    if (correct) {                                // did user match the text?
+      hits++;                                     // got it right!
+      hitTone();
+    }
+    else {
+      misses++;                                   // user muffed it
+      missTone();  
+    }
+    showHitsAndMisses(hits,misses);               // display scores for user
+    delay(1000);                                  // wait a sec, then
+    tft.fillRect(50,50,120,80,BLACK);             // erase answer
+  } while (!correct);                             // repeat until correct
 }
 
 void flashcards()
@@ -1028,6 +1121,7 @@ void saveConfig()
   EEPROM.update(7,xWordSpaces);                   // save extra word spaces
   for (int i=0; i<10; i++)                        // save callsign,
     EEPROM.update(8+i,myCall[i]);                 // one letter at a time
+  EEPROM.update(18,keyerMode);                    // save keyer mode (1=A, 2=B);
 }
 
 void loadConfig()
@@ -1044,6 +1138,7 @@ void loadConfig()
      xWordSpaces = EEPROM.read(7);
      for (int i=0; i<10; i++)
        myCall[i] = EEPROM.read(8+i); 
+     keyerMode   = EEPROM.read(18);
      checkConfig();                               // ensure loaded settings are valid 
   } 
 
@@ -1062,7 +1157,9 @@ void checkConfig()                                // ensure config settings are 
   if (xWordSpaces>MAXWORDSPACES)                  // validate word spaces
      xWordSpaces = 0;
   if (!isAlphaNumeric(myCall[0]))                 // validate callsign
-     strcpy(myCall,"W8BH"); 
+     strcpy(myCall,"W8BH");
+  if ((keyerMode<0)||(keyerMode>2))               // invalid keyer moder
+    keyerMode = IAMBIC_B; 
 }
 
 void useDefaults()                                // if things get messed up...
@@ -1076,6 +1173,7 @@ void useDefaults()                                // if things get messed up...
   usePaddles  = true;
   xWordSpaces = 0;
   strcpy(myCall,"W8BH");  
+  keyerMode   = IAMBIC_B;
   saveConfig();
   roger();
 }
@@ -1109,7 +1207,9 @@ void setCodeSpeed()
 
 void setFarnsworth()
 {
-  const int x=240,y=100;                           // screen posn for speed display
+  const int x=240,y=100;                          // screen posn for speed display
+  if (codeSpeed>charSpeed) 
+     codeSpeed = charSpeed;                       // dont go above charSpeed
   tft.setTextSize(2);
   tft.println("\n\n\nFarnsworth");
   tft.print("Speed (WPM):");
@@ -1212,13 +1312,27 @@ void configKey()
   roger();                                        // and acknowledge.
 
   tft.println("Send Dit again for Key");          // now, select key or paddle input
-  tft.println("Press Dah for Paddles");
+  tft.println("Send Dah for Paddles");
   while (!button_pressed && 
     !ditPressed() && !dahPressed()) ;             // wait for user input
   if (button_pressed) return;                     // user wants to exit
   usePaddles = dahPressed();                      // dah = paddle input
+  tft.println("OK.\n");
   saveConfig();                                   // save it
-  roger();   
+  roger(); 
+
+  if (!usePaddles) return;
+  tft.println("Send Dit for Iambic A");           // now, select keyer mode
+  tft.println("Send Dah for Iambic B");
+  while (!button_pressed && 
+    !ditPressed() && !dahPressed()) ;             // wait for user input
+  if (button_pressed) return;                     // user wants to exit
+  if (ditPressed()) keyerMode = IAMBIC_A;
+  else keyerMode = IAMBIC_B;
+  tft.println("OK.\n");
+  saveConfig();                                   // save it
+  if (keyerMode==IAMBIC_A) sendCharacter('A');
+  else sendCharacter('B');   
 }
 
 void setCallsign() {
@@ -1431,7 +1545,7 @@ void loop()
   eraseMenus();                                   // clear screen below menu
   button_pressed = false;                         // reset flag for new presses
   randomSeed(millis());                           // randomize!
-  score = 0;                                      // restart score for copy challenges  
+  score=0; hits=0; misses=0;                      // restart score for copy challenges  
   switch(selection)                               // do action requested by user
   {
     case 00: sendKoch(); break;
@@ -1449,7 +1563,8 @@ void loop()
     case 13: copyWords(); break;
     case 14: copyCallsigns(); break;
     case 15: flashcards(); break;
-    case 16: twoWay(); break;
+    case 16: headCopy(); break;
+    case 17: twoWay(); break;
     
     case 20: setSpeed(); break;
     case 21: checkSpeed(); break;
