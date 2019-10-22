@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   16 Oct 2019
+        Date:   22 Oct 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -784,7 +784,7 @@ void sendFile(char* filename)                     // output a file to screen & m
     {                                    
       char ch = book.read();                      // get next character
       sendCharacter(ch);                          // and send it
-      if (ch=='\r') sendCharacter(' ');           // treat CR as a space
+      if (ch=='\n') sendCharacter(' ');           // treat CR as a space
       if (ditPressed() && dahPressed())           // user wants to 'skip' ahead:
       {
         sendString("=  ");                        // acknowledge the skip with ~BT
