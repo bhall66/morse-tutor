@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   22 Oct 2019
+        Date:   23 Oct 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -16,7 +16,7 @@
 
 //===================================  INCLUDES ========================================= 
 #include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"                 
+#include "Adafruit_ILI9341.h"
 #include "EEPROM.h"
 #include "SD.h"
 
@@ -51,6 +51,7 @@
 #define MAXFILES           20                     // max number of SD files recognized
 #define IAMBIC_A            1                     // Iambic Keyer Mode B 
 #define IAMBIC_B            2                     // Iambic Keyer Mode A
+#define LONGPRESS        1000                     // hold-down time for long press, in mSec
 
 //===================================  Color Constants ==================================
 #define BLACK          0x0000
@@ -346,12 +347,12 @@ void wordSpace()
 {
   delay(4*extracharDit());                        // 7 total (last char includes 3)
   if (xWordSpaces)                                // any user-specified delays?
-    delay(7*extracharDit()*xWordSpaces);          // yes, so additional wait between words                               
+    delay(7*extracharDit()*xWordSpaces);          // yes, so additional wait between words
 }
 
 void dit() {                                      // send a dit
   ditRequest = false;                             // clear any pending request
-  keyDown();                                      // turning on sound & led
+  keyDown();                                      // turN on sound & led
   int finished = millis()+ditPeriod;              // wait for duration of dit
   while (millis()<finished) {                     // check dah paddle while dit sounding 
     if ((keyerMode==IAMBIC_B) && dahPressed())    // if iambic B & dah was pressed,    
@@ -970,17 +971,6 @@ void copyWords()                                  // show a callsign & see if us
   }
 }
 
-void headCopy()                                  // show a callsign & see if user can copy it
-{
-  char text[10]; 
-  while (!button_pressed)                      
-  { 
-    int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
-    strcpy(text,words[index]);                    // pick a random word       
-    mimic2(text);                                 // and ask user to copy it
-  }
-}
-
 void encourageUser()                              // helper fn for showScore()
 {
   char *phrases[]= {"Good Job", "Keep Going",     // list of phrases to display
@@ -1013,14 +1003,7 @@ void showScore()                                  // helper fn for mimic()
   encourageUser();                                // show encouraging message periodically                                
 }
 
-void showHitsAndMisses(int hits, int misses)      // helper fn for mimic2()
-{                      
-  const int x=200,y1=50,y2=140,wd=105,ht=80;      // posn & size of scorecard             
-  displayNumber(hits,GREEN,x,y1,wd,ht);           // show the hits in green
-  displayNumber(misses,RED,x,y2,wd,ht);           // show misses in red                               
-}
-
-void mimic(char *text)
+void mimic1(char *text)
 {
   char ch, response[20];                                                          
   textRow=1; textCol=6;                           // set position of text 
@@ -1043,6 +1026,24 @@ void mimic(char *text)
   eraseMenus();                                   // erase screen for next attempt
 }
 
+void showHitsAndMisses(int hits, int misses)      // helper fn for mimic2()
+{                      
+  const int x=200,y1=50,y2=140,wd=105,ht=80;      // posn & size of scorecard             
+  displayNumber(hits,GREEN,x,y1,wd,ht);           // show the hits in green
+  displayNumber(misses,RED,x,y2,wd,ht);           // show misses in red                               
+}
+
+void headCopy()                                  // show a callsign & see if user can copy it
+{
+  char text[10]; 
+  while (!button_pressed)                      
+  { 
+    int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
+    strcpy(text,words[index]);                    // pick a random word       
+    mimic2(text);                                 // and ask user to copy it
+  }
+}
+
 void hitTone()
 {
   tone(AUDIO,440); delay(150);
@@ -1058,7 +1059,7 @@ void missTone()
 
 void mimic2(char *text)                           // used by head-copy feature
 {
-  char ch, response[20]; bool correct;   
+  char ch, response[20]; bool correct,leave;   
   do {                                            // repeat same word until correct                                            
     sendMorseWord(text);                          // morse the text, NO DISPLAY
     strcpy(response,"");                          // start with empty response
@@ -1072,6 +1073,7 @@ void mimic2(char *text)                           // used by head-copy feature
     } while (ch!=' ');                            // space = word timeout
     if (button_pressed) return;                   // leave without scoring
     correct = !strcmp(text,response);             // did user match the text?
+    leave   = !strcmp(response,"=");              // user entered BT/break to skip
     if (correct) {                                // did user match the text?
       hits++;                                     // got it right!
       hitTone();
@@ -1083,7 +1085,14 @@ void mimic2(char *text)                           // used by head-copy feature
     showHitsAndMisses(hits,misses);               // display scores for user
     delay(1000);                                  // wait a sec, then
     tft.fillRect(50,50,120,80,BLACK);             // erase answer
-  } while (!correct);                             // repeat until correct
+  } while (!correct && !leave);                   // repeat until correct or user breaks
+}
+
+void mimic (char* text)
+{
+  if (button_downtime > LONGPRESS)                // did user hold button down > 1 sec?
+    mimic2 (text);                                // yes, so use alternate scoring mode 
+  else mimic1 (text);                             // no, so use original scoring mode
 }
 
 void flashcards()
@@ -1132,16 +1141,15 @@ void loadConfig()
      charSpeed   = EEPROM.read(1);
      codeSpeed   = EEPROM.read(2);
      pitch       = EEPROM.read(3)*10;
-     ditPaddle   = EEPROM.read(4); 
+     ditPaddle   = EEPROM.read(4);
      kochLevel   = EEPROM.read(5);
      usePaddles  = EEPROM.read(6);
      xWordSpaces = EEPROM.read(7);
      for (int i=0; i<10; i++)
        myCall[i] = EEPROM.read(8+i); 
      keyerMode   = EEPROM.read(18);
-     checkConfig();                               // ensure loaded settings are valid 
+     checkConfig();                               // ensure loaded settings are valid
   } 
-
 }
 
 void checkConfig()                                // ensure config settings are valid
@@ -1159,7 +1167,7 @@ void checkConfig()                                // ensure config settings are 
   if (!isAlphaNumeric(myCall[0]))                 // validate callsign
      strcpy(myCall,"W8BH");
   if ((keyerMode<0)||(keyerMode>2))               // invalid keyer moder
-    keyerMode = IAMBIC_B; 
+    keyerMode = IAMBIC_B;
 }
 
 void useDefaults()                                // if things get messed up...
@@ -1172,7 +1180,7 @@ void useDefaults()                                // if things get messed up...
   kochLevel   = 1;
   usePaddles  = true;
   xWordSpaces = 0;
-  strcpy(myCall,"W8BH");  
+  strcpy(myCall,"W8BH");
   keyerMode   = IAMBIC_B;
   saveConfig();
   roger();
@@ -1266,7 +1274,7 @@ void setSpeed()
 {
   setCodeSpeed();                                 // get code speed
   setFarnsworth();                                // get farnsworth delay
-  setExtraWordDelay();                            // Thank you Mark AJ6CU!  
+  setExtraWordDelay();                            // Thank you Mark AJ6CU!
   saveConfig();                                   // save the new speed values
   roger();                                        // and acknowledge  
 }
@@ -1298,6 +1306,14 @@ void setPitch()
 
 void configKey()
 {
+  tft.print("Currently: ");                       // show current settings:
+  if (!usePaddles)                                // using paddles?
+    tft.print("Straight Key");                    // not on your life!
+  else {
+    tft.print("Iambic Mode ");                    // of course paddles, but which keyer mode?
+    if (keyerMode==IAMBIC_B) tft.print("B");      // show iambic B or iambic A
+    else tft.print("A");
+  }
   tft.setCursor(0,60);
   tft.println("Send a dit NOW");                  // first, determine which input is dit
   while (!button_pressed && 
@@ -1332,7 +1348,7 @@ void configKey()
   tft.println("OK.\n");
   saveConfig();                                   // save it
   if (keyerMode==IAMBIC_A) sendCharacter('A');
-  else sendCharacter('B');   
+  else sendCharacter('B');
 }
 
 void setCallsign() {
@@ -1517,7 +1533,7 @@ void splashScreen()                               // not splashy at all!
   tft.setTextSize(3);
   tft.setTextColor(TEXTCOLOR);
   tft.setCursor(100, 50); 
-  tft.print(myCall);                             // display user's callsign
+  tft.print(myCall);                              // display user's callsign
   tft.setTextColor(CYAN);
   tft.setCursor(15, 90);      
   tft.print("Morse Code Tutor");                  // add title
