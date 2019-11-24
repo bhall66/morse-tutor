@@ -1,8 +1,8 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   23 Oct 2019
+        Date:   22 Nov 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
-    Software:   Arduino IDE 1.8.9; stm32duino package @ dan.drown.org
+    Software:   Arduino IDE 1.8.10; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
@@ -68,12 +68,12 @@
 // ==================================  Menu Constants ===================================
 #define DISPLAYWIDTH      320                     // Number of LCD pixels in long-axis
 #define DISPLAYHEIGHT     240                     // Number of LCD pixels in short-axis
-#define TOPDEADSPACE       30                     // All submenus appear below top line
+#define TOPMARGIN          30                     // All submenus appear below top line
 #define MENUSPACING       100                     // Width in pixels for each menu column
 #define ROWSPACING         23                     // Height in pixels for each text row
 #define COLSPACING         12                     // Width in pixels for each text character
 #define MAXCOL   DISPLAYWIDTH/COLSPACING          // Number of characters per row    
-#define MAXROW  (DISPLAYHEIGHT-TOPDEADSPACE)/ROWSPACING  // Number of text-rows per screen
+#define MAXROW  (DISPLAYHEIGHT-TOPMARGIN)/ROWSPACING  // Number of text-rows per screen
 #define FG              GREEN                     // Menu foreground color 
 #define BG              BLACK                     // Menu background color
 #define SELECTFG         BLUE                     // Selected Menu foreground color
@@ -107,11 +107,11 @@ char *words[]     = {"THE", "OF", "AND", "TO", "A", "IN", "THAT", "IS", "WAS", "
                      "MAN", "ME", "EVEN", "MOST", "MADE", "AFTER", "ALSO", "DID", "MANY", "OFF", 
                      "BEFORE", "MUST", "WELL", "BACK", "THROUGH", "YEARS", "MUCH", "WHERE", "YOUR", "WAY"  
                     };
-char *antenna[]   = {"DIPOLE", "VERTICAL", "BEAM"};
+char *antenna[]   = {"YAGI", "DIPOLE", "VERTICAL", "HEXBEAM", "MAGLOOP"};
 char *weather[]   = {"WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY"};
-char *names[]     = {"WAYNE", "JOHN", "TERRY", "JANE", "SUE", "LEON", "KIP", "DOUG", "DARREN", "JOSH", "JILL", "LYNN"};
-char *cities[]    = {"MEDINA, OH", "BILLINGS, MT", "SAN DIEGO", "WALLA WALLA, WA", "VERO BEACH, FL", "NASHVILLE, TN", "NYC", "CHICAGO", "LOS ANGELES", // 0-8
-                    "POSSUM TROT, MS", "ASPEN, CO", "AUSTIN, TX", "RALEIGH, NC"};
+char *names[]     = {"WAYNE", "TYE", "DARREN", "MICHAEL", "SARAH", "DOUG", "FERNANDO", "CHARLIE", "HOLLY"};
+char *cities[]    = {"DAYTON, OH", "HADDONFIELD, NJ", "MURRYSVILLE, PA", "BALTIMORE, MD", "ANN ARBOR, MI", 
+                     "BOULDER, CO", "BILLINGS, MT", "SANIBEL, FL", "CIMMARON, NM", "CHICAGO", "OLYMPIA, WA"};
 char *rigs[]      = {"YAESU FT101", "KENWOOD 780", "ELECRAFT K3", "HOMEBREW", "QRPLABS QCX", "ICOM 7410", "FLEX 6400"};
 char punctuation[]= "!@$&()-+=,.:;'/";
 char prefix[]     = {'A', 'W', 'K', 'N'};
@@ -272,8 +272,8 @@ void waitForButtonRelease()
 {
   if (buttonDown())                               // make sure button is currently pressed.
   {
-    while (!button_released) ;                    // wait for release
-    button_released = false;                      // and reset flag
+    button_released = false;                      // reset flag
+    while (!button_released) ;                    // and wait for release                     
   }
 }
 
@@ -724,7 +724,7 @@ void displayFiles(char menu[][FNAMESIZE], int top, int itemCount)
   eraseMenus();                                   // clear screen below menu
   for (int i = 0; i < MAXROW; i++)                // for all items in the frame
   {
-     int y = TOPDEADSPACE + i*ROWSPACING;         // calculate y coordinate
+     int y = TOPMARGIN + i*ROWSPACING;            // calculate y coordinate
      int item = top + i;
      if (item<itemCount)                          // make sure item exists
        showMenuItem(menu[item],x,y,FG,BG);        // and show the item.
@@ -736,7 +736,7 @@ int fileMenu(char menu[][FNAMESIZE], int itemCount) // Display list of files & g
   int index=0,top=0,pos=0,x=30,y; 
   button_pressed = false;                         // reset button flag
   displayFiles(menu,0,itemCount);                 // display as many files as possible
-  showMenuItem(menu[0],x,TOPDEADSPACE,            // highlight first item
+  showMenuItem(menu[0],x,TOPMARGIN,               // highlight first item
     SELECTFG,SELECTBG);
   while (!button_pressed)                         // exit on button press
   {
@@ -761,12 +761,12 @@ int fileMenu(char menu[][FNAMESIZE], int itemCount) // Display list of files & g
       }
       else                                        // we must be moving within the frame
       {
-        y = TOPDEADSPACE + pos*ROWSPACING;        // calc y-coord of current item
+        y = TOPMARGIN + pos*ROWSPACING;           // calc y-coord of current item
         showMenuItem(menu[index],x,y,FG,BG);      // deselect current item
         index += dir;                             // go to next/prev item
       }
       pos = index-top;                            // posn of selected item in visible list
-      y = TOPDEADSPACE + pos*ROWSPACING;          // calc y-coord of new item
+      y = TOPMARGIN + pos*ROWSPACING;             // calc y-coord of new item
       showMenuItem(menu[index],x,y,
         SELECTFG,SELECTBG);                       // select new item
     }
@@ -1166,7 +1166,7 @@ void checkConfig()                                // ensure config settings are 
      xWordSpaces = 0;
   if (!isAlphaNumeric(myCall[0]))                 // validate callsign
      strcpy(myCall,"W8BH");
-  if ((keyerMode<0)||(keyerMode>2))               // invalid keyer moder
+  if ((keyerMode<0)||(keyerMode>2))               // validate keyer mode
     keyerMode = IAMBIC_B;
 }
 
@@ -1313,7 +1313,7 @@ void configKey()
     tft.print("Iambic Mode ");                    // of course paddles, but which keyer mode?
     if (keyerMode==IAMBIC_B) tft.print("B");      // show iambic B or iambic A
     else tft.print("A");
-  }
+  }  
   tft.setCursor(0,60);
   tft.println("Send a dit NOW");                  // first, determine which input is dit
   while (!button_pressed && 
@@ -1377,7 +1377,7 @@ void setCallsign() {
 void showCharacter(char c, int row, int col)      // display a character at given row & column
 {
   int x = col * COLSPACING;                       // convert column to x coordinate
-  int y = TOPDEADSPACE + (row * ROWSPACING);      // convert row to y coordinate
+  int y = TOPMARGIN + (row * ROWSPACING);         // convert row to y coordinate
   tft.setCursor(x,y);                             // position character on screen
   tft.print(c);                                   // and display it 
 }
@@ -1396,9 +1396,9 @@ void addCharacter(char c)
 
 void eraseMenus()                                 // clear the text portion of the display
 {
-  tft.fillRect(0, TOPDEADSPACE, DISPLAYWIDTH, DISPLAYHEIGHT, BLACK);
+  tft.fillRect(0, TOPMARGIN, DISPLAYWIDTH, DISPLAYHEIGHT, BLACK);
   tft.setTextColor(TEXTCOLOR,BLACK);
-  tft.setCursor(0,TOPDEADSPACE);
+  tft.setCursor(0,TOPMARGIN);
   textRow=0; textCol=0;                           // start text below the top menu
 }
 
@@ -1425,7 +1425,7 @@ void showMenuItem(char *item, int x, int y, int fgColor, int bgColor)
 {
   tft.setCursor(x,y);
   tft.setTextColor(fgColor, bgColor);
-  tft.print(item);  
+  tft.print(item);                              
 }
 
 int topMenu(char *menu[], int itemCount)          // Display a horiz menu & return user selection
@@ -1439,8 +1439,8 @@ int topMenu(char *menu[], int itemCount)          // Display a horiz menu & retu
 
   showMenuItem(menu[index],index*MENUSPACING,     // highlight current item
     0,SELECTFG,SELECTBG);
-  tft.drawLine(0,TOPDEADSPACE-4,DISPLAYWIDTH,
-    TOPDEADSPACE-4, YELLOW);                      // horiz. line below menu
+  tft.drawLine(0,TOPMARGIN-4,DISPLAYWIDTH,
+    TOPMARGIN-4, YELLOW);                         // horiz. line below menu
 
   while (!button_pressed)                         // loop for user input:
   {
@@ -1466,10 +1466,10 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
   x = menuCol * MENUSPACING;                      // x-coordinate of this menu
   for (int i = 0; i < itemCount; i++)             // for all items in the menu...
   {
-     y = TOPDEADSPACE + i*ROWSPACING;             // calculate y coordinate
+     y = TOPMARGIN + i*ROWSPACING;                // calculate y coordinate
      showMenuItem(menu[i],x,y,FG,BG);             // and show the item.
   }
-  showMenuItem(menu[index],x,TOPDEADSPACE,        // highlight selected item
+  showMenuItem(menu[index],x,TOPMARGIN,           // highlight selected item
     SELECTFG,SELECTBG);
 
   while (!button_pressed)                         // exit on button press
@@ -1477,12 +1477,12 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
     int dir = readEncoder();                      // check for encoder movement
     if (dir)                                      // it moved!    
     {
-      y = TOPDEADSPACE + index*ROWSPACING;        // calc y-coord of current item
+      y = TOPMARGIN + index*ROWSPACING;           // calc y-coord of current item
       showMenuItem(menu[index],x,y,FG,BG);        // deselect current item
       index += dir;                               // go to next/prev item
       if (index > itemCount-1) index=0;           // dont go past last item
       if (index < 0) index = itemCount-1;         // dont go before first item
-       y = TOPDEADSPACE + index*ROWSPACING;       // calc y-coord of new item
+      y = TOPMARGIN + index*ROWSPACING;           // calc y-coord of current item
       showMenuItem(menu[index],x,y,
         SELECTFG,SELECTBG);                       // select new item
     }

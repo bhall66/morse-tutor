@@ -1,8 +1,8 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   23 Oct 2019
-    Hardware:   ESP32 DevBoard "HiLetGo", 2.2" ILI9341 TFT display
-    Software:   Arduino IDE 1.8.9
+        Date:   22 Nov 2019
+    Hardware:   ESP32 DevBoard "HiLetGo", ILI9341 TFT display
+    Software:   Arduino IDE 1.8.10
        Legal:   Copyright (c) 2019  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
@@ -25,14 +25,13 @@
 //===================================  Hardware Connections =============================
 #define TFT_DC             21                     // LCD "DC" pin
 #define TFT_CS             05                     // LCD "CS" pin
-#define TFT_RST            22                     // LCD "RST" pin
 #define SD_CS              17                     // SD card "CS" pin
 #define ENCODER_A          16                     // Rotary Encoder output A
 #define ENCODER_B           4                     // Rotary Encoder output B
 #define ENCODER_BUTTON     15                     // Rotary Encoder switch
 #define PADDLE_A           32                     // Morse Paddle "dit"
 #define PADDLE_B           33                     // Morse Paddle "dah"
-#define AUDIO              13                     // pin attached to piezo element
+#define AUDIO              13                     // Audio output
 #define LED                 2                     // onboard LED pin
 #define SCREEN_ROTATION     3                     // landscape mode: use '1' or '3'
 
@@ -76,12 +75,12 @@
 // ==================================  Menu Constants ===================================
 #define DISPLAYWIDTH      320                     // Number of LCD pixels in long-axis
 #define DISPLAYHEIGHT     240                     // Number of LCD pixels in short-axis
-#define TOPDEADSPACE       30                     // All submenus appear below top line
+#define TOPMARGIN          30                     // All submenus appear below top line
 #define MENUSPACING       100                     // Width in pixels for each menu column
 #define ROWSPACING         23                     // Height in pixels for each text row
 #define COLSPACING         12                     // Width in pixels for each text character
 #define MAXCOL   DISPLAYWIDTH/COLSPACING          // Number of characters per row    
-#define MAXROW  (DISPLAYHEIGHT-TOPDEADSPACE)/ROWSPACING  // Number of text-rows per screen
+#define MAXROW  (DISPLAYHEIGHT-TOPMARGIN)/ROWSPACING  // Number of text-rows per screen
 #define FG              GREEN                     // Menu foreground color 
 #define BG              BLACK                     // Menu background color
 #define SELECTFG         BLUE                     // Selected Menu foreground color
@@ -117,11 +116,11 @@ char *words[]     = {"THE", "OF", "AND", "TO", "A", "IN", "THAT", "IS", "WAS", "
                      "MAN", "ME", "EVEN", "MOST", "MADE", "AFTER", "ALSO", "DID", "MANY", "OFF", 
                      "BEFORE", "MUST", "WELL", "BACK", "THROUGH", "YEARS", "MUCH", "WHERE", "YOUR", "WAY"  
                     };
-char *antenna[]   = {"DIPOLE", "VERTICAL", "BEAM"};
+char *antenna[]   = {"YAGI", "DIPOLE", "VERTICAL", "HEXBEAM", "MAGLOOP"};
 char *weather[]   = {"WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY"};
-char *names[]     = {"WAYNE", "JOHN", "TERRY", "JANE", "SUE", "LEON", "KIP", "DOUG", "DARREN", "JOSH", "JILL", "LYNN"};
-char *cities[]    = {"MEDINA, OH", "BILLINGS, MT", "SAN DIEGO", "WALLA WALLA, WA", "VERO BEACH, FL", "NASHVILLE, TN", "NYC", "CHICAGO", "LOS ANGELES", // 0-8
-                    "POSSUM TROT, MS", "ASPEN, CO", "AUSTIN, TX", "RALEIGH, NC"};
+char *names[]     = {"WAYNE", "TYE", "DARREN", "MICHAEL", "SARAH", "DOUG", "FERNANDO", "CHARLIE", "HOLLY"};
+char *cities[]    = {"DAYTON, OH", "HADDONFIELD, NJ", "MURRYSVILLE, PA", "BALTIMORE, MD", "ANN ARBOR, MI", 
+                     "BOULDER, CO", "BILLINGS, MT", "SANIBEL, FL", "CIMMARON, NM", "CHICAGO", "OLYMPIA, WA"};
 char *rigs[]      = {"YAESU FT101", "KENWOOD 780", "ELECRAFT K3", "HOMEBREW", "QRPLABS QCX", "ICOM 7410", "FLEX 6400"};
 char punctuation[]= "!@$&()-+=,.:;'/";
 char prefix[]     = {'A', 'W', 'K', 'N'};
@@ -270,6 +269,7 @@ void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 void onDataRecv(const uint8_t *mac_add, const uint8_t *data, int data_len)
 {
   if (data_len!=1) return;                        // only accept one-byte packets
+  setStatusLED(GREEN);                            // green status LED for data received
   Serial.print("Received data: ");
   Serial.print(*data,HEX);
   Serial.print(", '");
@@ -320,12 +320,12 @@ void addPeer2(const uint8_t *peerMacAddress)
   memcpy(peer.peer_addr, peerMacAddress, 6);
   if (esp_now_add_peer(&peer) == ESP_OK)          // try to add unit #2 as a peer 
   {
-     setStatusLED(GREEN);                          // it worked, so turn LED green
+     setStatusLED(GREEN);                         // it worked, so turn LED green
      Serial.println("SUCCESS");   
   }
   else
   {
-     setStatusLED(RED);                         // couldn't add unit #2  
+     setStatusLED(RED);                           // couldn't add unit #2  
      Serial.println("FAILED");  
   }
 }
@@ -363,11 +363,12 @@ void sendAddPeerCmd()
   Serial.println("Now asking peer to add me");
   delay(500); 
   sendWireless(CMD_ADDME);                        // send message to other unit:
-  delay(100);                                      // add me as a network peer
+  delay(100);                                     // add me as a network peer
 }
 
 void closeWireless()
 {
+  setStatusLED(BLACK);                            // erase two-way status LED
   Serial.println("Telling peer I am closing");
   sendWireless(CMD_LEAVING);                      // message other unit: I am leaving
   esp_now_deinit();                               // quit esp_now
@@ -479,8 +480,8 @@ void waitForButtonRelease()
 {
   if (buttonDown())                               // make sure button is currently pressed.
   {
-    while (!button_released) ;                    // wait for release
-    button_released = false;                      // and reset flag
+    button_released = false;                      // reset flag
+    while (!button_released) ;                    // and wait for release                     
   }
 }
 
@@ -491,6 +492,12 @@ void waitForButtonPress()
     while (!button_pressed) ;                     // wait for press
     button_pressed = false;                       // and reset flag
   }  
+}
+
+bool longPress()
+{
+  waitForButtonRelease();                         // wait until button is released
+  return (button_downtime > LONGPRESS);           // then check time is was held down
 }
 
 /* 
@@ -908,6 +915,15 @@ void sendQSO()
   sendString(qso);                                // send entire QSO
 }
 
+/*
+void showMenuItem(char *item, int x, int y, int fgColor, int bgColor)
+{
+  tft.setCursor(x,y);
+  tft.setTextColor(fgColor, bgColor);
+  tft.print(item);                              
+}
+*/
+
 int getFileList  (char list[][FNAMESIZE])         // gets list of files on SD card
 {
   File root = SD.open("/");                       // open root directory on the SD card
@@ -918,7 +934,7 @@ int getFileList  (char list[][FNAMESIZE])         // gets list of files on SD ca
     if (!entry) break;                            // leave if there aren't any more
     if (!entry.isDirectory() &&                   // ignore directory names
     (entry.name()[0] != '_'))                     // ignore hidden "_name" Mac files
-      strcpy(list[count++],entry.name());         // add name of SD file to the list
+      strcpy(list[count++],&entry.name()[1]);     // add SD file to the list (ESP32: remove '/')
     entry.close();                                // close the file
   }
   root.close(); 
@@ -931,7 +947,7 @@ void displayFiles(char menu[][FNAMESIZE], int top, int itemCount)
   eraseMenus();                                   // clear screen below menu
   for (int i = 0; i < MAXROW; i++)                // for all items in the frame
   {
-     int y = TOPDEADSPACE + i*ROWSPACING;         // calculate y coordinate
+     int y = TOPMARGIN + i*ROWSPACING;            // calculate y coordinate
      int item = top + i;
      if (item<itemCount)                          // make sure item exists
        showMenuItem(menu[item],x,y,FG,BG);        // and show the item.
@@ -943,7 +959,7 @@ int fileMenu(char menu[][FNAMESIZE], int itemCount) // Display list of files & g
   int index=0,top=0,pos=0,x=30,y; 
   button_pressed = false;                         // reset button flag
   displayFiles(menu,0,itemCount);                 // display as many files as possible
-  showMenuItem(menu[0],x,TOPDEADSPACE,            // highlight first item
+  showMenuItem(menu[0],x,TOPMARGIN,               // highlight first item
     SELECTFG,SELECTBG);
   while (!button_pressed)                         // exit on button press
   {
@@ -968,12 +984,12 @@ int fileMenu(char menu[][FNAMESIZE], int itemCount) // Display list of files & g
       }
       else                                        // we must be moving within the frame
       {
-        y = TOPDEADSPACE + pos*ROWSPACING;        // calc y-coord of current item
+        y = TOPMARGIN + pos*ROWSPACING;           // calc y-coord of current item
         showMenuItem(menu[index],x,y,FG,BG);      // deselect current item
         index += dir;                             // go to next/prev item
       }
       pos = index-top;                            // posn of selected item in visible list
-      y = TOPDEADSPACE + pos*ROWSPACING;          // calc y-coord of new item
+      y = TOPMARGIN + pos*ROWSPACING;             // calc y-coord of new item
       showMenuItem(menu[index],x,y,
         SELECTFG,SELECTBG);                       // select new item
     }
@@ -983,16 +999,20 @@ int fileMenu(char menu[][FNAMESIZE], int itemCount) // Display list of files & g
 
 void sendFile(char* filename)                     // output a file to screen & morse
 {
+  char s[FNAMESIZE] = "/";                        // ESP32: need space for whole filename
+  strcat(s,filename);                             // ESP32: prepend filename with slash
   const int pageSkip = 250;                       // number of characters to skip, if asked to
   eraseMenus();                                   // clear screen below menu
+  if (longPress()) initWireless();                // if long button press, send file wirelessly
   button_pressed = false;                         // reset flag for new presses
-  File book = SD.open(filename);                  // look for book on sd card
+  File book = SD.open(s);                         // look for book on sd card
   if (book) {                                     // find it? 
     while (!button_pressed && book.available())   // do for all characters in book:
     {                                    
       char ch = book.read();                      // get next character
+      if (ch=='\n') ch = ' ';                     // convert LN to a space
       sendCharacter(ch);                          // and send it
-      if (ch=='\n') sendCharacter(' ');           // treat CR as a space
+      if (longPress()) sendWireless(ch);
       if (ditPressed() && dahPressed())           // user wants to 'skip' ahead:
       {
         sendString("=  ");                        // acknowledge the skip with ~BT
@@ -1002,6 +1022,7 @@ void sendFile(char* filename)                     // output a file to screen & m
     }
     book.close();                                 // close the file
   } 
+  if (longPress()) closeWireless();
 }
 
 void sendFromSD()                                 // show files on SD card, get user selection & send it.
@@ -1340,7 +1361,6 @@ void twoWay()                                     // wireless QSO between units
       sendCharacter(ch);                          // sound it out and show it.
     }
   }
-  setStatusLED(BLACK);                            // erase two-way status LED
   tft.setTextColor(TEXTCOLOR);
   closeWireless();
 }
@@ -1397,7 +1417,7 @@ void checkConfig()                                // ensure config settings are 
      xWordSpaces = 0;
   if (!isAlphaNumeric(myCall[0]))                 // validate callsign
      strcpy(myCall,"W8BH");
-  if ((keyerMode<0)||(keyerMode>2))               // invalid keyer moder
+  if ((keyerMode<0)||(keyerMode>2))               // validate keyer mode
     keyerMode = IAMBIC_B;
 }
 
@@ -1608,7 +1628,7 @@ void setCallsign() {
 void showCharacter(char c, int row, int col)      // display a character at given row & column
 {
   int x = col * COLSPACING;                       // convert column to x coordinate
-  int y = TOPDEADSPACE + (row * ROWSPACING);      // convert row to y coordinate
+  int y = TOPMARGIN + (row * ROWSPACING);         // convert row to y coordinate
   tft.setCursor(x,y);                             // position character on screen
   tft.print(c);                                   // and display it 
 }
@@ -1627,9 +1647,9 @@ void addCharacter(char c)
 
 void eraseMenus()                                 // clear the text portion of the display
 {
-  tft.fillRect(0, TOPDEADSPACE, DISPLAYWIDTH, DISPLAYHEIGHT, BLACK);
+  tft.fillRect(0, TOPMARGIN, DISPLAYWIDTH, DISPLAYHEIGHT, BLACK);
   tft.setTextColor(TEXTCOLOR,BLACK);
-  tft.setCursor(0,TOPDEADSPACE);
+  tft.setCursor(0,TOPMARGIN);
   textRow=0; textCol=0;                           // start text below the top menu
 }
 
@@ -1656,7 +1676,7 @@ void showMenuItem(char *item, int x, int y, int fgColor, int bgColor)
 {
   tft.setCursor(x,y);
   tft.setTextColor(fgColor, bgColor);
-  tft.print(item);  
+  tft.print(item);                              
 }
 
 int topMenu(char *menu[], int itemCount)          // Display a horiz menu & return user selection
@@ -1670,8 +1690,8 @@ int topMenu(char *menu[], int itemCount)          // Display a horiz menu & retu
 
   showMenuItem(menu[index],index*MENUSPACING,     // highlight current item
     0,SELECTFG,SELECTBG);
-  tft.drawLine(0,TOPDEADSPACE-4,DISPLAYWIDTH,
-    TOPDEADSPACE-4, YELLOW);                      // horiz. line below menu
+  tft.drawLine(0,TOPMARGIN-4,DISPLAYWIDTH,
+    TOPMARGIN-4, YELLOW);                         // horiz. line below menu
 
   while (!button_pressed)                         // loop for user input:
   {
@@ -1689,7 +1709,7 @@ int topMenu(char *menu[], int itemCount)          // Display a horiz menu & retu
   return index;  
 }
 
-int subMenuOld (char *menu[], int itemCount)          // Display drop-down menu & return user selection
+int subMenuOld (char *menu[], int itemCount)      // Display drop-down menu & return user selection
 {
   int index=0, x,y; 
   button_pressed = false;                         // reset button flag
@@ -1697,10 +1717,10 @@ int subMenuOld (char *menu[], int itemCount)          // Display drop-down menu 
   x = menuCol * MENUSPACING;                      // x-coordinate of this menu
   for (int i = 0; i < itemCount; i++)             // for all items in the menu...
   {
-     y = TOPDEADSPACE + i*ROWSPACING;             // calculate y coordinate
+     y = TOPMARGIN + i*ROWSPACING;                // calculate y coordinate
      showMenuItem(menu[i],x,y,FG,BG);             // and show the item.
   }
-  showMenuItem(menu[index],x,TOPDEADSPACE,        // highlight selected item
+  showMenuItem(menu[index],x,TOPMARGIN,           // highlight selected item
     SELECTFG,SELECTBG);
 
   while (!button_pressed)                         // exit on button press
@@ -1708,12 +1728,12 @@ int subMenuOld (char *menu[], int itemCount)          // Display drop-down menu 
     int dir = readEncoder();                      // check for encoder movement
     if (dir)                                      // it moved!    
     {
-      y = TOPDEADSPACE + index*ROWSPACING;        // calc y-coord of current item
+      y = TOPMARGIN + index*ROWSPACING;           // calc y-coord of current item
       showMenuItem(menu[index],x,y,FG,BG);        // deselect current item
       index += dir;                               // go to next/prev item
       if (index > itemCount-1) index=0;           // dont go past last item
       if (index < 0) index = itemCount-1;         // dont go before first item
-       y = TOPDEADSPACE + index*ROWSPACING;       // calc y-coord of new item
+       y = TOPMARGIN + index*ROWSPACING;          // calc y-coord of new item
       showMenuItem(menu[index],x,y,
         SELECTFG,SELECTBG);                       // select new item
     }
@@ -1726,7 +1746,7 @@ void displayFrame(char *menu[], int top, int itemCount)
   int x = menuCol * MENUSPACING;                  // x-coordinate of this menu
   for (int i = 0; i < MAXROW; i++)                // for all items in the frame
   {
-     int y = TOPDEADSPACE + i*ROWSPACING;         // calculate y coordinate
+     int y = TOPMARGIN + i*ROWSPACING;            // calculate y coordinate
      int item = top + i;
      if (item<itemCount)                          // make sure item exists
        showMenuItem(menu[item],x,y,FG,BG);        // and show the item.
@@ -1739,7 +1759,7 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
   button_pressed = false;                         // reset button flag
   x = menuCol * MENUSPACING;                      // x-coordinate of this menu
   displayFrame(menu,0,itemCount);                 // display as many menu items as possible
-  showMenuItem(menu[0],x,TOPDEADSPACE,            // highlight first item
+  showMenuItem(menu[0],x,TOPMARGIN,               // highlight first item
     SELECTFG,SELECTBG);
 
   while (!button_pressed)                         // exit on button press
@@ -1765,12 +1785,12 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
       }
       else                                        // we must be moving within the frame
       {
-        y = TOPDEADSPACE + pos*ROWSPACING;        // calc y-coord of current item
+        y = TOPMARGIN + pos*ROWSPACING;           // calc y-coord of current item
         showMenuItem(menu[index],x,y,FG,BG);      // deselect current item
         index += dir;                             // go to next/prev item
       }
       pos = index-top;                            // posn of selected item in visible list
-      y = TOPDEADSPACE + pos*ROWSPACING;          // calc y-coord of new item
+      y = TOPMARGIN + pos*ROWSPACING;             // calc y-coord of new item
       showMenuItem(menu[index],x,y,
         SELECTFG,SELECTBG);                       // select new item
     }
@@ -1838,7 +1858,7 @@ void splashScreen()                               // not splashy at all!
 void setup() 
 {
   Serial.begin(115200);                           // for debugging only 
-  EEPROM.begin(16);                               // ESP32 specific for 16 bytes Flash
+  EEPROM.begin(32);                               // ESP32 specific for 32 bytes Flash
   initSD();                                       // initialize SD library
   loadConfig();                                   // get saved values from EEPROM
   initEncoder();                                  // attach encoder interrupts
