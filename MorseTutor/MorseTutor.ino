@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   22 Nov 2019
+        Date:   01 Dec 2019
     Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
     Software:   Arduino IDE 1.8.10; stm32duino package @ dan.drown.org
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -108,10 +108,11 @@ char *words[]     = {"THE", "OF", "AND", "TO", "A", "IN", "THAT", "IS", "WAS", "
                      "BEFORE", "MUST", "WELL", "BACK", "THROUGH", "YEARS", "MUCH", "WHERE", "YOUR", "WAY"  
                     };
 char *antenna[]   = {"YAGI", "DIPOLE", "VERTICAL", "HEXBEAM", "MAGLOOP"};
-char *weather[]   = {"WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY"};
-char *names[]     = {"WAYNE", "TYE", "DARREN", "MICHAEL", "SARAH", "DOUG", "FERNANDO", "CHARLIE", "HOLLY"};
+char *weather[]   = {"HOT", "SUNNY", "WARM", "CLOUDY", "RAINY", "COLD", "SNOWY", "CHILLY", "WINDY", "FOGGY"};
+char *names[]     = {"WAYNE", "TYE", "DARREN", "MICHAEL", "SARAH", "DOUG", "FERNANDO", "CHARLIE", "HOLLY",
+                     "KEN", "SCOTT", "DAN", "ERVIN", "GENE", "PAUL", "VINCENT"};
 char *cities[]    = {"DAYTON, OH", "HADDONFIELD, NJ", "MURRYSVILLE, PA", "BALTIMORE, MD", "ANN ARBOR, MI", 
-                     "BOULDER, CO", "BILLINGS, MT", "SANIBEL, FL", "CIMMARON, NM", "CHICAGO", "OLYMPIA, WA"};
+                     "BOULDER, CO", "BILLINGS, MT", "SANIBEL, FL", "CIMMARON, NM", "TYLER, TX", "OLYMPIA, WA"};
 char *rigs[]      = {"YAESU FT101", "KENWOOD 780", "ELECRAFT K3", "HOMEBREW", "QRPLABS QCX", "ICOM 7410", "FLEX 6400"};
 char punctuation[]= "!@$&()-+=,.:;'/";
 char prefix[]     = {'A', 'W', 'K', 'N'};
@@ -284,6 +285,12 @@ void waitForButtonPress()
     while (!button_pressed) ;                     // wait for press
     button_pressed = false;                       // and reset flag
   }  
+}
+
+bool longPress()
+{
+  waitForButtonRelease();                         // wait until button is released
+  return (button_downtime > LONGPRESS);           // then check time is was held down
 }
 
 /* 

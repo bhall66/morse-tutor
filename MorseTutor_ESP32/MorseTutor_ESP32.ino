@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   22 Nov 2019
+        Date:   01 Dec 2019
     Hardware:   ESP32 DevBoard "HiLetGo", ILI9341 TFT display
     Software:   Arduino IDE 1.8.10
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -117,10 +117,11 @@ char *words[]     = {"THE", "OF", "AND", "TO", "A", "IN", "THAT", "IS", "WAS", "
                      "BEFORE", "MUST", "WELL", "BACK", "THROUGH", "YEARS", "MUCH", "WHERE", "YOUR", "WAY"  
                     };
 char *antenna[]   = {"YAGI", "DIPOLE", "VERTICAL", "HEXBEAM", "MAGLOOP"};
-char *weather[]   = {"WARM", "SUNNY", "CLOUDY", "COLD", "RAIN", "SNOW", "FOGGY"};
-char *names[]     = {"WAYNE", "TYE", "DARREN", "MICHAEL", "SARAH", "DOUG", "FERNANDO", "CHARLIE", "HOLLY"};
+char *weather[]   = {"HOT", "SUNNY", "WARM", "CLOUDY", "RAINY", "COLD", "SNOWY", "CHILLY", "WINDY", "FOGGY"};
+char *names[]     = {"WAYNE", "TYE", "DARREN", "MICHAEL", "SARAH", "DOUG", "FERNANDO", "CHARLIE", "HOLLY",
+                     "KEN", "SCOTT", "DAN", "ERVIN", "GENE", "PAUL", "VINCENT"};
 char *cities[]    = {"DAYTON, OH", "HADDONFIELD, NJ", "MURRYSVILLE, PA", "BALTIMORE, MD", "ANN ARBOR, MI", 
-                     "BOULDER, CO", "BILLINGS, MT", "SANIBEL, FL", "CIMMARON, NM", "CHICAGO", "OLYMPIA, WA"};
+                     "BOULDER, CO", "BILLINGS, MT", "SANIBEL, FL", "CIMMARON, NM", "TYLER, TX", "OLYMPIA, WA"};
 char *rigs[]      = {"YAESU FT101", "KENWOOD 780", "ELECRAFT K3", "HOMEBREW", "QRPLABS QCX", "ICOM 7410", "FLEX 6400"};
 char punctuation[]= "!@$&()-+=,.:;'/";
 char prefix[]     = {'A', 'W', 'K', 'N'};
@@ -915,15 +916,6 @@ void sendQSO()
   sendString(qso);                                // send entire QSO
 }
 
-/*
-void showMenuItem(char *item, int x, int y, int fgColor, int bgColor)
-{
-  tft.setCursor(x,y);
-  tft.setTextColor(fgColor, bgColor);
-  tft.print(item);                              
-}
-*/
-
 int getFileList  (char list[][FNAMESIZE])         // gets list of files on SD card
 {
   File root = SD.open("/");                       // open root directory on the SD card
@@ -1003,7 +995,8 @@ void sendFile(char* filename)                     // output a file to screen & m
   strcat(s,filename);                             // ESP32: prepend filename with slash
   const int pageSkip = 250;                       // number of characters to skip, if asked to
   eraseMenus();                                   // clear screen below menu
-  if (longPress()) initWireless();                // if long button press, send file wirelessly
+  bool wireless = longPress();                    // if long button press, send file wirelessly
+  if (wireless) initWireless();                   // start wireless transmission
   button_pressed = false;                         // reset flag for new presses
   File book = SD.open(s);                         // look for book on sd card
   if (book) {                                     // find it? 
@@ -1012,7 +1005,7 @@ void sendFile(char* filename)                     // output a file to screen & m
       char ch = book.read();                      // get next character
       if (ch=='\n') ch = ' ';                     // convert LN to a space
       sendCharacter(ch);                          // and send it
-      if (longPress()) sendWireless(ch);
+      if (wireless) sendWireless(ch);
       if (ditPressed() && dahPressed())           // user wants to 'skip' ahead:
       {
         sendString("=  ");                        // acknowledge the skip with ~BT
@@ -1022,7 +1015,7 @@ void sendFile(char* filename)                     // output a file to screen & m
     }
     book.close();                                 // close the file
   } 
-  if (longPress()) closeWireless();
+  if (wireless) closeWireless();                  // close wireless transmission
 }
 
 void sendFromSD()                                 // show files on SD card, get user selection & send it.
