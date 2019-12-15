@@ -1,6 +1,6 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   01 Dec 2019
+        Date:   15 Dec 2019
     Hardware:   ESP32 DevBoard "HiLetGo", ILI9341 TFT display
     Software:   Arduino IDE 1.8.10
        Legal:   Copyright (c) 2019  Bruce E. Hall.
@@ -1348,7 +1348,7 @@ void twoWay()                                     // wireless QSO between units
     }
     oldCh = ch;                                   // and remember it 
 
-    if (ch=deQueue())                             // any characters to receive?
+    while (ch=deQueue())                          // any characters to receive?
     {
       tft.setTextColor(RXCOLOR);                  // change text color
       sendCharacter(ch);                          // sound it out and show it.

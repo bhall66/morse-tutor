@@ -1,8 +1,8 @@
 /**************************************************************************
       Author:   Bruce E. Hall, w8bh.net
-        Date:   01 Dec 2019
-    Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display, Piezo
-    Software:   Arduino IDE 1.8.10; stm32duino package @ dan.drown.org
+        Date:   12 Dec 2019
+    Hardware:   STM32F103C "Blue Pill", 2.2" ILI9341 TFT display
+    Software:   Arduino IDE 1.8.10; https://github.com/stm32duino/BoardManagerFiles
        Legal:   Copyright (c) 2019  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
