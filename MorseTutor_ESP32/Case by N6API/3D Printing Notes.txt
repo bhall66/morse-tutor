@@ -1,0 +1,8 @@
+From John N6API:
+
+This Case is designed to enclose the ESP32 PCB Rev 2b.  It is also designed for the 3.2" TFT Display.
+There are three parts to the enclosure.
+There is a Bottom Piece that contains the PCB.
+There is a Top Piece that encloses the PCB.
+There is a Display Bezel.  The Bezel is made to be spot glued when you get it in the position you desire,
+The three pieces were created on Tinkercad.
