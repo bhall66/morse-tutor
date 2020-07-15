@@ -12,21 +12,22 @@
    
  **************************************************************************/
 
-#define TESTPIN   PB13               // change to the pin you want to test!
+#define TESTPIN   PB7                // change to the pin you want to test!
 
 #define LED       PC13               // DONT CHANGE THIS ONE
 
 void setup() {
   pinMode(TESTPIN, INPUT_PULLUP);    // configure test Pin as input
   pinMode(LED, OUTPUT);              // configure onboard LED
-  digitalWrite(LED, HIGH);           // turn off LED
+  digitalWrite(LED, LOW);            // turn off LED
 }
 
 void flashLED() {
-  digitalWrite(LED, LOW);            // turn the LED on
-  delay(200);                        // wait a bit
-  digitalWrite(LED, HIGH);           // turn the LED off
+  digitalWrite(LED, HIGH);           // turn the LED on
   delay(200);                        // wait a bit 
+  digitalWrite(LED, LOW);            // turn the LED off
+  delay(200);                        // wait a bit
+
 }
 
 bool testPinIsGrounded()

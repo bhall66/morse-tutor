@@ -13,7 +13,7 @@
  **************************************************************************/
 
 #define LED                PC13                   // pin for onboard LED
-#define SPEAKER            PB3                    // pin attached to speaker
+#define SPEAKER            PA2                    // pin attached to speaker
 #define PITCH              600                   // tone pitch, in Hz
 #define DURATION           500                    // tone duration, in mS
 
