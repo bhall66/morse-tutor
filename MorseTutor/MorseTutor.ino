@@ -1,9 +1,9 @@
 /**************************************************************************
-       Title:   Pocket Tutor
+       Title:   Morse Tutor
       Author:   Bruce E. Hall, w8bh.net
-        Date:   15 July 2020
+        Date:   28 Aug 2020
     Hardware:   STM32F103C, 3.2" ILI9341 TFT display
-    Software:   Arduino IDE 1.8.10; STM32 support via dan.drown.org
+    Software:   Arduino IDE 1.8.13; STM32 support via dan.drown.org
        Legal:   Copyright (c) 2020  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
@@ -37,7 +37,7 @@
 #define BACKLIGHT         PB1                     // Display Backlight control
 #define LED               PC13                    // onboard LED pin
 #define SCREEN_ROTATION     3                     // landscape mode: use '1' or '3'
-#define PNP_DRIVER        true                    // true = using PNP to drive backlight 
+#define PNP_DRIVER        true                    // true = using PNP to drive backlight
 
 //===================================  Morse Code Constants =============================
 #define DEFAULTSPEED       13                     // character speed in Words per Minute
@@ -60,15 +60,26 @@
 //===================================  Color Constants ==================================
 #define BLACK          0x0000
 #define BLUE           0x001F
+#define NAVY           0x000F               
 #define RED            0xF800
+#define MAROON         0x7800 
 #define GREEN          0x07E0
+#define LIME           0x0400
 #define CYAN           0x07FF
-#define MAGENTA        0xF81F
+#define TEAL           0x03EF
+#define PURPLE         0x780F                
+#define PINK           0xF81F
 #define YELLOW         0xFFE0
+#define ORANGE         0xFD20
+#define BROWN          0x79E0
 #define WHITE          0xFFFF
-#define DKGREEN        0x03E0
-#define GRAY           0x5AEB
-#define ORANGE         0xF540
+#define OLIVE          0x7BE0
+#define SILVER         0xC618        
+#define GRAY           0x7BEF
+#define DARKGRAY       0x1208
+
+const word colors[] = {BLACK,BLUE,NAVY,RED,MAROON,GREEN,LIME,CYAN,TEAL,PURPLE,
+  PINK,YELLOW,ORANGE,BROWN,WHITE,OLIVE,SILVER,GRAY,DARKGRAY};
 
 // ==================================  Menu Constants ===================================
 #define DISPLAYWIDTH      320                     // Number of LCD pixels in long-axis
@@ -1145,10 +1156,12 @@ void saveConfig()
   for (int i=0; i<10; i++)                        // save callsign,
     EEPROM.update(8+i,myCall[i]);                 // one letter at a time
   EEPROM.update(18,keyerMode);                    // save keyer mode (1=A, 2=B)
-  EEPROM.update(19,textColor);                    // save text color
-  EEPROM.update(20,bgColor);                      // save background color
-  EEPROM.update(21,startItem);                    // save startup activity
-  EEPROM.update(22,brightness);                   // save screen brightness
+  EEPROM.write(19,startItem);                     // save startup activity
+  EEPROM.write(20,brightness);                    // save screen brightness
+  EEPROM.write(21,highByte(textColor));           // save text color
+  EEPROM.write(22,lowByte(textColor));
+  EEPROM.write(23,highByte(bgColor));             // save background color
+  EEPROM.write(24,lowByte(bgColor));
 }
 
 void loadConfig()
@@ -1166,11 +1179,13 @@ void loadConfig()
      for (int i=0; i<10; i++)
        myCall[i] = EEPROM.read(8+i); 
      keyerMode   = EEPROM.read(18);
-     textColor   = EEPROM.read(19);
-     bgColor     = EEPROM.read(20);
-     startItem   = EEPROM.read(21);
-     brightness  = EEPROM.read(22);
-     checkConfig();                               // ensure loaded settings are valid
+     startItem   = EEPROM.read(19);
+     brightness  = EEPROM.read(20);
+     textColor   =(EEPROM.read(21)<<8)            // add color high byte
+                 + EEPROM.read(22);               // and color low byte
+     bgColor     =(EEPROM.read(23)<<8)
+                 + EEPROM.read(24);
+     checkConfig();                               // ensure loaded settings are valid   
   } 
 }
 
@@ -1192,10 +1207,11 @@ void checkConfig()                                // ensure config settings are 
     keyerMode = IAMBIC_B;
   if ((brightness<10)||(brightness>100)) 
     brightness=100;                               // validate screen brightness
-  if ((textColor<0)||(textColor>0xFFFF))
-    textColor = YELLOW;                           // validate text color
-  if ((bgColor<0)||(bgColor>0xFFFF))
-    bgColor = BLACK;                              // validate text color
+  if (textColor==bgColor)                         // text&bg colors must be different
+  {
+     textColor = CYAN;
+     bgColor = BLACK;    
+  }
   if ((startItem<-1)||(startItem>27))
     startItem = -1;                               // validate startup screen
 }
@@ -1280,37 +1296,35 @@ void changeStartup()                              // choose startup activity
 
 void changeBackground()
 {
-  const int bgColors[] = {BLACK,0x1111,0x5170,0x42C7,0x6841,0x39D0,0x084F,0x3187};
   const int x=180,y=150;                          // screen posn for text display
   tft.setTextSize(2);
   tft.println("\n\n\nBackground:");
   tft.drawRect(x-6,y-6,134,49,WHITE);             // draw box around background
   button_pressed = false;
   int i = 0;
-  tft.fillRect(x-5,y-5,131,46,bgColors[i]);       // show current background color
+  tft.fillRect(x-5,y-5,131,46,colors[i]);         // show current background color
   while (!button_pressed)
   {
     int dir = readEncoder();
     if (dir!=0)                                   // user rotated encoder knob:
     {
       i += dir;                                   // change color up/down
-      i = constrain(i,0,ELEMENTS(bgColors)-1);    // keep within given colors
-      tft.fillRect(x-5,y-5,131,46,bgColors[i]);   // show new background color
+      i = constrain(i,0,ELEMENTS(colors)-1);      // keep within given colors
+      tft.fillRect(x-5,y-5,131,46,colors[i]);     // show new background color
     }
   }
-  bgColor = bgColors[i];                          // save background color
+  bgColor = colors[i];                            // save background color
 }
 
 void changeTextColor()
 {
   const char sample[] = "ABCDE";
-  const int colors[] = {BLUE,RED,GREEN,CYAN,MAGENTA,YELLOW,WHITE,DKGREEN,ORANGE,GRAY};
   const int x=180,y=150;                          // screen posn for text display
   tft.setTextSize(2);
   tft.println("Text Color:");
   tft.setTextSize(4);
   tft.setCursor(x,y);
-  int i = 3 ;                                     // start with cyan for fun
+  int i = 7 ;                                     // start with cyan for fun
   tft.setTextColor(colors[i]);
   tft.print(sample);                              // display text in cyan
   button_pressed = false;
@@ -1627,12 +1641,12 @@ int getMenuSelection()                            // Display menu system & get u
 void setTopMenu(char *str)                        // erase menu & replace with new text
 {
   clearMenu();
-  showMenuItem(str,0,0,FG,bgColor);                    
+  showMenuItem(str,0,0,FG,bgColor);
 }
 
 void showSelection(int choice)                    // display current activity on top menu
 {
-  char str[8];                                    // reserve room for string
+  char str[10];                                   // reserve room for string
   selectionString(choice,str);                    // get menu item that user chose
   setTopMenu(str);                                // and show it in menu bar
 }

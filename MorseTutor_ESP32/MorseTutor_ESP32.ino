@@ -1,9 +1,10 @@
 /**************************************************************************
+       Title:   Morse Tutor ESP32						   
       Author:   Bruce E. Hall, w8bh.net
-        Date:   15 Dec 2019
+        Date:   28 Aug 2020
     Hardware:   ESP32 DevBoard "HiLetGo", ILI9341 TFT display
-    Software:   Arduino IDE 1.8.10
-       Legal:   Copyright (c) 2019  Bruce E. Hall.
+    Software:   Arduino IDE 1.8.13
+       Legal:   Copyright (c) 2020  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
  Description:   Practice sending & receiving morse code
@@ -23,8 +24,8 @@
 #include "WiFi.h"
 
 //===================================  Hardware Connections =============================
-#define TFT_DC             21                     // LCD "DC" pin
-#define TFT_CS             05                     // LCD "CS" pin
+#define TFT_DC             21                     // Display "DC" pin
+#define TFT_CS             05                     // Display "CS" pin
 #define SD_CS              17                     // SD card "CS" pin
 #define ENCODER_A          16                     // Rotary Encoder output A
 #define ENCODER_B           4                     // Rotary Encoder output B
@@ -59,18 +60,31 @@
 #define IAMBIC_A            1                     // Iambic Keyer Mode B 
 #define IAMBIC_B            2                     // Iambic Keyer Mode A
 #define LONGPRESS        1000                     // hold-down time for long press, in mSec
+#define SUPPRESSLED     false                     // if true, do not flash diagnostic LED
 
 //===================================  Color Constants ==================================
 #define BLACK          0x0000
 #define BLUE           0x001F
+#define NAVY           0x000F               
 #define RED            0xF800
+#define MAROON         0x7800 
 #define GREEN          0x07E0
+#define LIME           0x0400
 #define CYAN           0x07FF
-#define MAGENTA        0xF81F
+#define TEAL           0x03EF
+#define PURPLE         0x780F                
+#define PINK           0xF81F
 #define YELLOW         0xFFE0
+#define ORANGE         0xFD20
+#define BROWN          0x79E0
 #define WHITE          0xFFFF
-#define DKGREEN        0x03E0
-#define GRAY           0x5AEB
+#define OLIVE          0x7BE0
+#define SILVER         0xC618        
+#define GRAY           0x7BEF
+#define DARKGRAY       0x1208
+
+const word colors[] = {BLACK,BLUE,NAVY,RED,MAROON,GREEN,LIME,CYAN,TEAL,PURPLE,
+  PINK,YELLOW,ORANGE,BROWN,WHITE,OLIVE,SILVER,GRAY,DARKGRAY};
 
 // ==================================  Menu Constants ===================================
 #define DISPLAYWIDTH      320                     // Number of LCD pixels in long-axis
@@ -82,7 +96,7 @@
 #define MAXCOL   DISPLAYWIDTH/COLSPACING          // Number of characters per row    
 #define MAXROW  (DISPLAYHEIGHT-TOPMARGIN)/ROWSPACING  // Number of text-rows per screen
 #define FG              GREEN                     // Menu foreground color 
-#define BG              BLACK                     // Menu background color
+#define BG              BLACK                     // App background color
 #define SELECTFG         BLUE                     // Selected Menu foreground color
 #define SELECTBG        WHITE                     // Selected Menu background color
 #define TEXTCOLOR      YELLOW                     // Default non-menu text color
@@ -203,14 +217,21 @@ bool usePaddles = false;                          // if true, using paddles; if 
 bool paused     = false;                          // if true, morse output is paused
 bool ditRequest = false;                          // dit memory for iambic sending
 bool dahRequest = false;                          // dah memory for iambic sending
+bool inStartup  = true;                           // startup flag
 char myCall[10] = "W8BH";
+int textColor   = TEXTCOLOR;                      // foreground (text) color
+int bgColor     = BG;                             // background (screen) color
+int brightness  = 100;                            // backlight level (range 0-100%)
+int startItem   = 0;                              // startup activity.  0 = main menu
+
+
 
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
-char *mainMenu[] = {" Receive ", "  Send   ", "  Config "};        
+char *mainMenu[] = {" Receive ", "  Send  ", "Config "};        
 char *menu0[]    = {" Koch    ", " Letters ", " Words   ", " Numbers ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " Exit    "};
 char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", " Flashcrd", " Head Cpy", " Two-Way ", " Exit    "};
-char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Callsign", " Defaults", " Exit    "};
+char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Callsign", " Screen  ", " Defaults", " Exit    "};
 
 
 //===================================  Wireless Code  ===================================
@@ -527,7 +548,7 @@ void keyUp()                                      // device-dependent actions
 
 void keyDown()                                    // device-dependent actions
 {                                                 // when key is down:
-  digitalWrite(LED,1);                            // turn on LED
+  if (!SUPPRESSLED) digitalWrite(LED,1);          // turn on LED
   ledcWriteTone(0,pitch);                         // and turn on sound
 }
 
@@ -627,9 +648,9 @@ void sendCharacter(char c) {                      // send a single ASCII charact
   if (c==32) wordSpace();                         // space between words 
   else sendElements(morse[c-33]);                 // send the character
   checkForSpeedChange();                          // allow change in speed while sending
-  do 
-    checkPause(); 
-  while (paused);                                 // allow user to pause morse output
+  do {
+    checkPause();
+  } while (paused);                               // allow user to pause morse output
 }
 
 void sendString (char *ptr) {             
@@ -689,17 +710,11 @@ void checkPause()
 
 //===================================  Koch Method  =====================================
 
-void setTopMenu(char *str)                        // erase menu & replace with new text
-{
-  tft.fillRect(0,0,DISPLAYWIDTH,ROWSPACING,BLACK); 
-  showMenuItem(str,0,0,FG,BG);                    
-}
-
 void sendKochLesson(int lesson)                   // send letter/number groups...
 { 
   const int maxCount = 175;                       // full screen = 20 x 9
   int charCount = 0;
-  eraseMenus();                                   // start with empty screen
+  newScreen();                                    // start with empty screen
   while (!button_pressed && 
   (charCount < maxCount))                         // full screen = 1 lesson 
   {                            
@@ -715,7 +730,7 @@ void sendKochLesson(int lesson)                   // send letter/number groups..
 
 void introLesson(int lesson)                      // helper fn for getLessonNumber()
 {
-  eraseMenus();                                   // start with clean screen
+  newScreen();                                    // start with clean screen
   tft.print("You are in lesson ");
   tft.println(lesson);                            // show lesson number
   tft.println("\nCharacters: ");                  
@@ -725,7 +740,7 @@ void introLesson(int lesson)                      // helper fn for getLessonNumb
     tft.print(koch[i]);
     tft.print(" ");
   }
-  tft.setTextColor(TEXTCOLOR);
+  tft.setTextColor(textColor);
   tft.println("\n\nPress <dit> to begin");  
 }
 
@@ -936,7 +951,7 @@ int getFileList  (char list[][FNAMESIZE])         // gets list of files on SD ca
 void displayFiles(char menu[][FNAMESIZE], int top, int itemCount)
 {
   int x = 30;                                     // x-coordinate of this menu
-  eraseMenus();                                   // clear screen below menu
+  newScreen();                                    // clear screen below menu
   for (int i = 0; i < MAXROW; i++)                // for all items in the frame
   {
      int y = TOPMARGIN + i*ROWSPACING;            // calculate y coordinate
@@ -994,7 +1009,7 @@ void sendFile(char* filename)                     // output a file to screen & m
   char s[FNAMESIZE] = "/";                        // ESP32: need space for whole filename
   strcat(s,filename);                             // ESP32: prepend filename with slash
   const int pageSkip = 250;                       // number of characters to skip, if asked to
-  eraseMenus();                                   // clear screen below menu
+  newScreen();                                    // clear screen below menu
   bool wireless = longPress();                    // if long button press, send file wirelessly
   if (wireless) initWireless();                   // start wireless transmission
   button_pressed = false;                         // reset flag for new presses
@@ -1213,7 +1228,7 @@ void displayNumber(int num, int color,            // show large number on screen
   tft.fillRect(x,y,wd,ht,color);                  // on selected background
   tft.print(num);                                 // show the number
   tft.setTextSize(2);                             // resume usual size
-  tft.setTextColor(TEXTCOLOR,BLACK);              // resume usual colors  
+  tft.setTextColor(textColor,BLACK);              // resume usual colors  
 }
   
 void showScore()                                  // helper fn for mimic()
@@ -1244,7 +1259,7 @@ void mimic1(char *text)
   else score = 0;                                 // no, so reset score to 0
   showScore();                                    // display score for user
   delay(FLASHCARDDELAY);                          // wait between attempts
-  eraseMenus();                                   // erase screen for next attempt
+  newScreen();                                    // erase screen for next attempt
 }
 
 void showHitsAndMisses(int hits, int misses)      // helper fn for mimic2()
@@ -1329,7 +1344,7 @@ void flashcards()
      tft.setCursor(120,70);
      tft.print(char('!'+index));                  // show the answer
      delay(FLASHCARDDELAY);                       // wait a little
-     eraseMenus();                                // and start over.
+     newScreen();                                 // and start over.
   }
 }
 
@@ -1358,8 +1373,18 @@ void twoWay()                                     // wireless QSO between units
   closeWireless();
 }
 
-
 //===================================  Config Menu  =====================================
+
+void printConfig()                                // debugging only; not called
+{
+  Serial.println("EEPROM contents");
+  for (int i=0; i<25; i++) {
+    int value = EEPROM.read(i);
+    Serial.print(i); Serial.print(": ");
+    Serial.println(value,HEX);
+  }
+  Serial.println();
+}
 
 void saveConfig()
 {
@@ -1373,7 +1398,13 @@ void saveConfig()
   EEPROM.write(7,xWordSpaces);                    // save extra word spaces
   for (int i=0; i<10; i++)                        // save callsign,
     EEPROM.write(8+i,myCall[i]);                  // one letter at a time
-  EEPROM.write(18,keyerMode);                     // save keyer mode (1=A, 2=B);
+  EEPROM.write(18,keyerMode);                     // save keyer mode (1=A, 2=B)
+  EEPROM.write(19,startItem);                     // save startup activity
+  EEPROM.write(20,brightness);                    // save screen brightness
+  EEPROM.write(21,highByte(textColor));           // save text color
+  EEPROM.write(22,lowByte(textColor));
+  EEPROM.write(23,highByte(bgColor));             // save background color
+  EEPROM.write(24,lowByte(bgColor));
   EEPROM.commit();                                // ESP32 only
 }
 
@@ -1392,7 +1423,13 @@ void loadConfig()
      for (int i=0; i<10; i++)
        myCall[i] = EEPROM.read(8+i); 
      keyerMode   = EEPROM.read(18);
-     checkConfig();                               // ensure loaded settings are valid
+     startItem   = EEPROM.read(19);
+     brightness  = EEPROM.read(20);
+     textColor   =(EEPROM.read(21)<<8)            // add color high byte
+                 + EEPROM.read(22);               // and color low byte
+     bgColor     =(EEPROM.read(23)<<8)
+                 + EEPROM.read(24);
+     checkConfig();                               // ensure loaded settings are valid   
   } 
 }
 
@@ -1412,6 +1449,15 @@ void checkConfig()                                // ensure config settings are 
      strcpy(myCall,"W8BH");
   if ((keyerMode<0)||(keyerMode>2))               // validate keyer mode
     keyerMode = IAMBIC_B;
+  if ((brightness<10)||(brightness>100)) 
+    brightness=100;                               // validate screen brightness
+  if (textColor==bgColor)                         // text&bg colors must be different
+  {
+     textColor = CYAN;
+     bgColor = BLACK;    
+  }
+  if ((startItem<-1)||(startItem>27))
+    startItem = -1;                               // validate startup screen
 }
 
 void useDefaults()                                // if things get messed up...
@@ -1426,8 +1472,153 @@ void useDefaults()                                // if things get messed up...
   xWordSpaces = 0;
   strcpy(myCall,"W8BH");
   keyerMode   = IAMBIC_B;
+  brightness  = 100;
+  textColor   = TEXTCOLOR;
+  bgColor     = BG;
+  startItem   = -1;
   saveConfig();
   roger();
+}
+
+char *ltrim(char *str) {                          // quick n' dirty trim routine
+  while (*str==' ') str++;                        // dangerous but efficient
+  return str;
+}
+
+void selectionString(int choice, char *str)       // return menu item in str
+{
+  strcpy(str,"");
+  if (choice<0) return;                           // validate input value      
+  int i = choice/10;                              // get menu from selection
+  int j = choice%10;                              // get menu item from selection
+  switch (i) 
+  {
+    case 0: strcpy(str,ltrim(menu0[j])); break;   // show choice from menu0
+    case 1: strcpy(str,ltrim(menu1[j])); break;   // show choice from menu1
+    case 2: strcpy(str,ltrim(menu2[j])); break;   // show choice from menu2
+    default: ;                                    // oopsie
+  }
+}
+
+void showMenuChoice(int choice)
+{
+  char str[10];
+  const int x=180,y=40;                           // screen posn for startup display
+  tft.fillRect(x,y,130,32,bgColor);               // erase any prior entry
+  tft.setCursor(x,y);
+  if (choice<0) tft.print("Main Menu");            
+  else {
+    tft.println(ltrim(mainMenu[choice/10]));      // show top menu choice on line 1
+    tft.setCursor(x,y+16);                        // go to next line
+    selectionString(choice,str);                  // get menu item
+    tft.print(str);                               // and show it
+  }
+}
+
+void changeStartup()                              // choose startup activity
+{
+  const int LASTITEM = 27;                        // currenly 27 choices
+  tft.setTextSize(2);
+  tft.println("\nStartup:");
+  int i = startItem;
+  if ((i<0)||(i>LASTITEM)) i=-1;                  // dont wig out on bad value
+  showMenuChoice(i);                              // show current startup choice
+  button_pressed = false;
+  while (!button_pressed)
+  {
+    int dir = readEncoder();
+    if (dir!=0)                                   // user rotated encoder knob:
+    {
+      i += dir;                                   // change choice up/down
+      i = constrain(i,-1,LASTITEM);               // keep within bounds
+      showMenuChoice(i);                          // display new startup choice
+    }
+  }
+  startItem = i;                                  // update startup choice  
+}
+
+
+void changeBackground()
+{
+  const int x=180,y=150;                          // screen posn for text display
+  tft.setTextSize(2);
+  tft.println("\n\n\nBackground:");
+  tft.drawRect(x-6,y-6,134,49,WHITE);             // draw box around background
+  button_pressed = false;
+  int i = 0;
+  tft.fillRect(x-5,y-5,131,46,colors[i]);         // show current background color
+  while (!button_pressed)
+  {
+    int dir = readEncoder();
+    if (dir!=0)                                   // user rotated encoder knob:
+    {
+      i += dir;                                   // change color up/down
+      i = constrain(i,0,ELEMENTS(colors)-1);      // keep within given colors
+      tft.fillRect(x-5,y-5,131,46,colors[i]);     // show new background color
+    }
+  }
+  bgColor = colors[i];                            // save background color
+}
+
+void changeTextColor()
+{
+  const char sample[] = "ABCDE";
+  const int x=180,y=150;                          // screen posn for text display
+  tft.setTextSize(2);
+  tft.println("Text Color:");
+  tft.setTextSize(4);
+  tft.setCursor(x,y);
+  int i = 7;                                      // start with cyan for fun
+  tft.setTextColor(colors[i]);
+  tft.print(sample);                              // display text in cyan
+  button_pressed = false;
+  while (!button_pressed)
+  {
+    int dir = readEncoder();
+    if (dir!=0)                                   // user rotated encoder knob:
+    {
+      i += dir;                                   // change color up/down
+      i = constrain(i,0,ELEMENTS(colors)-1);      // keep within given colors
+      tft.setCursor(x,y);
+      tft.setTextColor(colors[i],bgColor);        // show text in new color
+      tft.print(sample);
+    }
+  }
+  textColor = colors[i];                          // update text color
+}
+
+void changeBrightness()
+{
+  const int x=180,y=100;                           // screen position
+  tft.println("\n\n\nBrightness:");
+  tft.setTextSize(4);
+  tft.setCursor(x,y);
+  tft.print(brightness);                          // show current brightness
+  button_pressed = true;                          // on ESP32, inhibit user input                 
+  while (!button_pressed)
+  {
+    int dir = readEncoder(2);
+    if (dir!=0)                                   // user rotated encoder knob
+    {
+      brightness += dir*5;                        // so change level up/down, 5% increments
+      brightness = constrain(brightness,10,100);  // stay in range
+      tft.fillRect(x,y,100,40,bgColor);           // erase old value
+      tft.setCursor(x,y);
+      tft.print(brightness);                      // and display new value
+      setBrightness(brightness);                  // update screen brightness
+    }
+  }
+}
+
+void setScreen()
+{
+  changeStartup();                                // set startup screen
+  changeBrightness();                             // set display brightness
+  changeBackground();                             // set background color
+  changeTextColor();                              // set text color
+  saveConfig();                                   // save settings 
+  roger();                                        // and acknowledge
+  clearScreen();
 }
 
 void setCodeSpeed()
@@ -1444,12 +1635,10 @@ void setCodeSpeed()
     int dir = readEncoder();
     if (dir!=0)                                   // user rotated encoder knob:
     {
-      charSpeed += dir;                           // ...so change speed up/down 
-      if (charSpeed<MINSPEED) 
-        charSpeed = MINSPEED;                     // dont go below minimum
-      if (charSpeed>MAXSPEED) 
-        charSpeed = MAXSPEED;                     // dont go above maximum
-      tft.fillRect(x,y,50,50,BLACK);              // erase old speed
+      charSpeed += dir;                           // ...so change speed up/down
+      charSpeed = constrain(charSpeed,
+        MINSPEED,MAXSPEED);
+      tft.fillRect(x,y,50,50,bgColor);            // erase old speed
       tft.setCursor(x,y);
       tft.print(charSpeed);                       // and show new speed 
     }
@@ -1474,12 +1663,10 @@ void setFarnsworth()
     int dir = readEncoder();
     if (dir!=0)                                   // user rotated encoder knob:
     {
-      codeSpeed += dir;                           // ...so change speed up/down          
-      if (codeSpeed<MINSPEED) 
-        codeSpeed = MINSPEED;                     // dont go below minimum
-      if (codeSpeed>charSpeed) 
-        codeSpeed = charSpeed;                    // dont go above charSpeed
-      tft.fillRect(x,y,50,50,BLACK);              // erase old speed
+      codeSpeed += dir;                           // ...so change speed up/down 
+      codeSpeed = constrain(codeSpeed,            // dont go below minimum 
+        MINSPEED,charSpeed);                      // and dont exceed charSpeed
+      tft.fillRect(x,y,50,50,bgColor);            // erase old speed
       tft.setCursor(x,y);
       tft.print(codeSpeed);                       // and show new speed    
     }
@@ -1502,14 +1689,12 @@ void setExtraWordDelay()                          // add extra word spacing
     int dir = readEncoder();
     if (dir!=0)                                   // user rotated encoder knob:
     {
-      xWordSpaces += dir;                         // ...so change value up/down          
-      if (xWordSpaces<0) 
-        xWordSpaces = 0;                          // dont go below zero
-      if (xWordSpaces>MAXWORDSPACES)
-        xWordSpaces = MAXWORDSPACES;              // dont go above max
-      tft.fillRect(x,y,50,50,BLACK);              // erase old speed
+      xWordSpaces += dir;                         // ...so change value up/down 
+      xWordSpaces = constrain(xWordSpaces,        // stay in range 0..MAX
+        0,MAXWORDSPACES);         
+      tft.fillRect(x,y,50,50,bgColor);            // erase old value
       tft.setCursor(x,y);
-      tft.print(xWordSpaces);                     // and show new speed    
+      tft.print(xWordSpaces);                     // and show new value  
     }
   }                
 }
@@ -1536,9 +1721,8 @@ void setPitch()
     if (dir!=0)                                   // user rotated encoder knob
     {
       pitch += dir*50;                            // so change pitch up/down, 50Hz increments
-      if (pitch<MINPITCH) pitch = MINPITCH;       // dont go below minimum
-      if (pitch>MAXPITCH) pitch = MAXPITCH;       // dont go above maximum
-      tft.fillRect(x,y,100,40,BLACK);             // erase old value
+      pitch=constrain(pitch,MINPITCH,MAXPITCH);   // stay in range
+      tft.fillRect(x,y,100,40,bgColor);           // erase old value
       tft.setCursor(x,y);
       tft.print(pitch);                           // and display new value
       dit();                                      // let user hear new pitch
@@ -1615,6 +1799,47 @@ void setCallsign() {
   roger();  
 }
 
+//===================================  Screen Routines ====================================
+
+//  The screen is divided into 3 areas:  Menu, Icons, and Body
+//
+//  [------------------------------------------------------]
+//  [     Menu                                      Icons  ]
+//  [------------------------------------------------------]
+//  [                                                      ]
+//  [     Body                                             ]
+//  [                                                      ]
+//  [------------------------------------------------------]
+//
+//  "Menu" is where the main menu is displayed
+//  "Icons" is for battery icon and other special flags (30px)
+//  "Body" is the writable area of the screen  
+
+void clearMenu()
+{
+  tft.fillRect(0,0,DISPLAYWIDTH-30,ROWSPACING,bgColor);   
+}
+
+void clearBody()
+{
+  tft.fillRect(0, TOPMARGIN, DISPLAYWIDTH, DISPLAYHEIGHT, bgColor);  
+}
+
+void clearScreen()
+{
+  tft.fillScreen(bgColor);                        // fill screen with background color
+  tft.drawLine(0,TOPMARGIN-6,DISPLAYWIDTH,
+    TOPMARGIN-6, YELLOW);                         // draw horizontal menu line  
+} 
+
+void newScreen()                                  // prepare display for new text.  Menu not distrubed
+{
+  clearBody();                                    // clear screen below menu
+  tft.setTextColor(textColor,bgColor);            // set text foreground & background color
+  tft.setCursor(0,TOPMARGIN);                     // position graphics cursor
+  textRow=0; textCol=0;                           // position text cursor below the top menu
+}
+
 
 //===================================  Menu Routines ====================================
 
@@ -1634,22 +1859,14 @@ void addCharacter(char c)
      ((c==' ') && (textCol>MAXCOL-7)))            // or at a wordspace thats near end of row?
   {
     textRow++; textCol=0;                         // yes, so advance to beginning of next row
-    if (textRow >= MAXROW) eraseMenus();          // if no more rows, clear & start at top.
+    if (textRow >= MAXROW) newScreen();           // if no more rows, clear & start at top.
   }
-}
-
-void eraseMenus()                                 // clear the text portion of the display
-{
-  tft.fillRect(0, TOPMARGIN, DISPLAYWIDTH, DISPLAYHEIGHT, BLACK);
-  tft.setTextColor(TEXTCOLOR,BLACK);
-  tft.setCursor(0,TOPMARGIN);
-  textRow=0; textCol=0;                           // start text below the top menu
 }
 
 int getMenuSelection()                            // Display menu system & get user selection
 {
   int item;
-  eraseMenus();                                   // start with fresh screen
+  newScreen();                                    // start with fresh screen
   menuCol = topMenu(mainMenu,ELEMENTS(mainMenu)); // show horiz menu & get user choice
   switch (menuCol)                                // now show menu that user selected:
   {
@@ -1665,8 +1882,22 @@ int getMenuSelection()                            // Display menu system & get u
   return (menuCol*10 + item);                     // return user's selection
 }
 
+void setTopMenu(char *str)                        // erase menu & replace with new text
+{
+  clearMenu();
+  showMenuItem(str,0,0,FG,bgColor);
+}
+
+void showSelection(int choice)                    // display current activity on top menu
+{
+  char str[10];                                   // reserve room for string
+  selectionString(choice,str);                    // get menu item that user chose
+  setTopMenu(str);                                // and show it in menu bar
+}
+
 void showMenuItem(char *item, int x, int y, int fgColor, int bgColor)
 {
+  tft.setTextSize(2);                             // sets menu text size
   tft.setCursor(x,y);
   tft.setTextColor(fgColor, bgColor);
   tft.print(item);                              
@@ -1675,61 +1906,24 @@ void showMenuItem(char *item, int x, int y, int fgColor, int bgColor)
 int topMenu(char *menu[], int itemCount)          // Display a horiz menu & return user selection
 {
   int index = menuCol;                            // start w/ current row
-  tft.setTextSize(2);                             // sets menu text size
   button_pressed = false;                         // reset button flag
-
   for (int i = 0; i < itemCount; i++)             // for each item in menu                         
-    showMenuItem(menu[i],i*MENUSPACING,0,FG,BG);  // display it 
-
+    showMenuItem(menu[i],i*MENUSPACING,0,FG,bgColor);  // display it 
   showMenuItem(menu[index],index*MENUSPACING,     // highlight current item
     0,SELECTFG,SELECTBG);
-  tft.drawLine(0,TOPMARGIN-4,DISPLAYWIDTH,
-    TOPMARGIN-4, YELLOW);                         // horiz. line below menu
 
   while (!button_pressed)                         // loop for user input:
   {
     int dir = readEncoder();                      // check encoder
     if (dir) {                                    // did it move?
       showMenuItem(menu[index],index*MENUSPACING,
-        0, FG,BG);                                // deselect current item
+        0, FG,bgColor);                           // deselect current item
       index += dir;                               // go to next/prev item
       if (index > itemCount-1) index=0;           // dont go beyond last item
       if (index < 0) index = itemCount-1;         // dont go before first item
       showMenuItem(menu[index],index*MENUSPACING,
         0, SELECTFG,SELECTBG);                    // select new item         
     }  
-  }
-  return index;  
-}
-
-int subMenuOld (char *menu[], int itemCount)      // Display drop-down menu & return user selection
-{
-  int index=0, x,y; 
-  button_pressed = false;                         // reset button flag
-
-  x = menuCol * MENUSPACING;                      // x-coordinate of this menu
-  for (int i = 0; i < itemCount; i++)             // for all items in the menu...
-  {
-     y = TOPMARGIN + i*ROWSPACING;                // calculate y coordinate
-     showMenuItem(menu[i],x,y,FG,BG);             // and show the item.
-  }
-  showMenuItem(menu[index],x,TOPMARGIN,           // highlight selected item
-    SELECTFG,SELECTBG);
-
-  while (!button_pressed)                         // exit on button press
-  {
-    int dir = readEncoder();                      // check for encoder movement
-    if (dir)                                      // it moved!    
-    {
-      y = TOPMARGIN + index*ROWSPACING;           // calc y-coord of current item
-      showMenuItem(menu[index],x,y,FG,BG);        // deselect current item
-      index += dir;                               // go to next/prev item
-      if (index > itemCount-1) index=0;           // dont go past last item
-      if (index < 0) index = itemCount-1;         // dont go before first item
-       y = TOPMARGIN + index*ROWSPACING;          // calc y-coord of new item
-      showMenuItem(menu[index],x,y,
-        SELECTFG,SELECTBG);                       // select new item
-    }
   }
   return index;  
 }
@@ -1742,7 +1936,7 @@ void displayFrame(char *menu[], int top, int itemCount)
      int y = TOPMARGIN + i*ROWSPACING;            // calculate y coordinate
      int item = top + i;
      if (item<itemCount)                          // make sure item exists
-       showMenuItem(menu[item],x,y,FG,BG);        // and show the item.
+       showMenuItem(menu[item],x,y,FG,bgColor);   // and show the item.
   } 
 }
 
@@ -1779,7 +1973,7 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
       else                                        // we must be moving within the frame
       {
         y = TOPMARGIN + pos*ROWSPACING;           // calc y-coord of current item
-        showMenuItem(menu[index],x,y,FG,BG);      // deselect current item
+        showMenuItem(menu[index],x,y,FG,bgColor); // deselect current item
         index += dir;                             // go to next/prev item
       }
       pos = index-top;                            // posn of selected item in visible list
@@ -1793,6 +1987,11 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
 
 
 //================================  Main Program Code ================================
+
+void setBrightness(int level)                     // level 0 (off) to 100 (full on)       
+{
+   // not implemented in ESP32 version at this time 
+}
 
 void initEncoder()
 {
@@ -1829,12 +2028,13 @@ void initScreen()
   tft.begin();                                    // initialize screen object
   tft.setRotation(SCREEN_ROTATION);               // landscape mode: use '1' or '3'
   tft.fillScreen(BLACK);                          // start with blank screen
+  setBrightness(100);                             // start screen full brighness
 }
 
 void splashScreen()                               // not splashy at all!
 {                                                 // have fun sprucing it up.
   tft.setTextSize(3);
-  tft.setTextColor(TEXTCOLOR);
+  tft.setTextColor(YELLOW);
   tft.setCursor(100, 50); 
   tft.print(myCall);                              // display user's callsign
   tft.setTextColor(CYAN);
@@ -1843,27 +2043,34 @@ void splashScreen()                               // not splashy at all!
   tft.setTextSize(1);
   tft.setCursor(50,220);
   tft.setTextColor(WHITE);
-  tft.print("Copyright (c) 2019, Bruce E. Hall"); // legal small print
-  delay(2000);                                    // keep it on screen for a while
-  tft.fillScreen(BLACK);                          // then erase it.
+  tft.print("Copyright (c) 2020, Bruce E. Hall"); // legal small print
+  tft.setTextSize(2);
 }
+
 
 void setup() 
 {
   Serial.begin(115200);                           // for debugging only 
+  initScreen();                                   // blank screen in landscape mode
+  splashScreen();                                 // show we are ready
   EEPROM.begin(32);                               // ESP32 specific for 32 bytes Flash
   initSD();                                       // initialize SD library
   loadConfig();                                   // get saved values from EEPROM
   initEncoder();                                  // attach encoder interrupts
-  initScreen();                                   // blank screen in landscape mode
   initMorse();                                    // attach paddles & adjust speed
-  splashScreen();                                 // show we are ready
+  delay(2000);                                    // keep splash screen on for a while
+  clearScreen();
 }
+
 
 void loop()
 {
-  int selection = getMenuSelection();             // get menu selection from user
-  eraseMenus();                                   // clear screen below menu
+  int selection = startItem;                      // start with user specified startup screen
+  if (!inStartup || (startItem<0))                // but, if there isn't one,                 
+    selection = getMenuSelection();               // get menu selection from user instead
+  inStartup = false;                              // reset startup flag
+  showSelection(selection);                       // display users selection at top of screen
+  newScreen();                                    // and clear the screen below it.
   button_pressed = false;                         // reset flag for new presses
   randomSeed(millis());                           // randomize!
   score=0; hits=0; misses=0;                      // restart score for copy challenges  
@@ -1892,7 +2099,8 @@ void loop()
     case 22: setPitch(); break;
     case 23: configKey(); break;
     case 24: setCallsign(); break;
-    case 25: useDefaults(); break;
+    case 25: setScreen(); break;
+    case 26: useDefaults(); break;
     default: ;
-  }
+  }  
 }
