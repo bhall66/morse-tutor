@@ -1,7 +1,7 @@
 /**************************************************************************
        Title:   Morse Tutor ESP32						   
       Author:   Bruce E. Hall, w8bh.net
-        Date:   28 Aug 2020
+        Date:   09 Sep 2020
     Hardware:   ESP32 DevBoard "HiLetGo", ILI9341 TFT display
     Software:   Arduino IDE 1.8.13
        Legal:   Copyright (c) 2020  Bruce E. Hall.
@@ -2052,10 +2052,10 @@ void setup()
 {
   Serial.begin(115200);                           // for debugging only 
   initScreen();                                   // blank screen in landscape mode
-  splashScreen();                                 // show we are ready
   EEPROM.begin(32);                               // ESP32 specific for 32 bytes Flash
   initSD();                                       // initialize SD library
   loadConfig();                                   // get saved values from EEPROM
+  splashScreen();                                 // show we are ready
   initEncoder();                                  // attach encoder interrupts
   initMorse();                                    // attach paddles & adjust speed
   delay(2000);                                    // keep splash screen on for a while

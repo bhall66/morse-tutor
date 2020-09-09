@@ -1,7 +1,7 @@
 /**************************************************************************
        Title:   Morse Tutor
       Author:   Bruce E. Hall, w8bh.net
-        Date:   28 Aug 2020
+        Date:   09 Sep 2020
     Hardware:   STM32F103C, 3.2" ILI9341 TFT display
     Software:   Arduino IDE 1.8.13; STM32 support via dan.drown.org
        Legal:   Copyright (c) 2020  Bruce E. Hall.
@@ -1801,10 +1801,10 @@ void splashScreen()                               // not splashy at all!
 void setup() 
 {
   initScreen();                                   // blank screen in landscape mode
-  splashScreen();                                 // show we are ready
   initEEPROM();                                   // initialize EEPROM library
   initSD();                                       // initialize SD library
   loadConfig();                                   // get saved values from EEPROM
+  splashScreen();                                 // show we are ready
   initEncoder();                                  // attach encoder interrupts
   initMorse();                                    // attach paddles & adjust speed
   delay(2000);                                    // keep splash screen on for a while
