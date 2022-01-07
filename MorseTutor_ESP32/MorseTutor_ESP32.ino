@@ -1,9 +1,12 @@
 /**************************************************************************
        Title:   Morse Tutor ESP32						   
       Author:   Bruce E. Hall, w8bh.net
-        Date:   09 Sep 2020
+        Date:   07 Jan 2022
     Hardware:   ESP32 DevBoard "HiLetGo", ILI9341 TFT display
-    Software:   Arduino IDE 1.8.13
+    Software:   Arduino IDE 1.8.19
+                ESP32 by Expressif Systems 1.0.6
+                Adafruit GFX Library 1.5.3
+                Adafruit ILI9341 1.5.6
        Legal:   Copyright (c) 2020  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
@@ -16,8 +19,8 @@
 
 
 //===================================  INCLUDES ========================================= 
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+#include "Adafruit_GFX.h"                         // Version 1.5.3
+#include "Adafruit_ILI9341.h"                     // Version 1.5.6
 #include "EEPROM.h"
 #include "SD.h"
 #include "esp_now.h"
