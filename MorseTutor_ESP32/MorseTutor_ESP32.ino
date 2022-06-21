@@ -1,5 +1,5 @@
 /**************************************************************************
-       Title:   Morse Tutor ESP32						   
+       Title:   Morse Tutor ESP32               
       Author:   Bruce E. Hall, w8bh.net
         Date:   07 Jan 2022
     Hardware:   ESP32 DevBoard "HiLetGo", ILI9341 TFT display
@@ -24,7 +24,9 @@
 #include "EEPROM.h"
 #include "SD.h"
 #include "esp_now.h"
+#include "HTTPClient.h"
 #include "WiFi.h"
+#include "WiFiClientSecure.h"
 
 //===================================  Hardware Connections =============================
 #define TFT_DC             21                     // Display "DC" pin
@@ -41,8 +43,10 @@
 
 //===================================  Wireless Constants ===============================
 #define CHANNEL             1                     // Wifi channel number
-#define WIFI_SSID      "W8BH Tutor"               // Wifi network name
-#define WIFI_PWD       "9372947313"               // Wifi password
+#define WIFI_AP_SSID      "W8BH Tutor"            // Wifi AP network name, connect to other tutor
+#define WIFI_AP_PWD       "9372947313"            // Wifi AP password
+#define WIFI_STA_SSID     "netwerkje"          // Wifi STA network name, connect to router
+#define WIFI_STA_PWD      "schalkhaar"      // Wifi STA password
 #define MAXBUFLEN         100                     // size of incoming character buffer
 #define CMD_ADDME        0x11                     // request to add this unit as a peer
 #define CMD_LEAVING      0x12                     // flag this unit as leaving
@@ -232,11 +236,31 @@ int startItem   = 0;                              // startup activity.  0 = main
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send  ", "Config "};        
-char *menu0[]    = {" Koch    ", " Letters ", " Words   ", " Numbers ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " Exit    "};
+char *menu0[]    = {" Koch    ", " Letters ", " Words   ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " News    ",  " Exit    "};
 char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", " Flashcrd", " Head Cpy", " Two-Way ", " Exit    "};
 char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Callsign", " Screen  ", " Defaults", " Exit    "};
 
+//===================================  RSS News Feeds ===================================
+const int numberOfFeeds = 6;
 
+char feedNames[numberOfFeeds][FNAMESIZE] = {
+  " ARRL       ", 
+  " DXNews     ", 
+  " Southgate  ", 
+  " BBC        ", 
+  " SciAm      ",
+  " GoogleTech "
+  };        
+
+// Note: don't add https:// to the URLs
+String feedUrls[] = {
+        "https://www.arrl.org/arrl.rss",
+        "https://dxnews.com/rss.xml",
+        "http://www.southgatearc.org/sarc.rss",
+        "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "http://rss.sciam.com/ScientificAmerican-News?format=xml",
+        "https://news.google.com/rss/search?q=technology&hl=en-US&gl=US&ceid=US:en",
+};
 //===================================  Wireless Code  ===================================
 
 esp_now_peer_info_t peer;                        // holds information about peer
@@ -268,8 +292,8 @@ void initESPNow()
 
 void configDeviceAP()
 {
-  char* SSID = WIFI_SSID;                         // access point name for this device
-  char* Password = WIFI_PWD;                      // password
+  char* SSID = WIFI_AP_SSID;                         // access point name for this device
+  char* Password = WIFI_AP_PWD;                      // password
   Serial.print("Starting Soft AP: ");
   Serial.println(WiFi.softAP(SSID,Password,CHANNEL,0)?
     "Ready": "FAILED");                           // set up WiFi access point
@@ -656,7 +680,7 @@ void sendCharacter(char c) {                      // send a single ASCII charact
   } while (paused);                               // allow user to pause morse output
 }
 
-void sendString (char *ptr) {             
+void sendString (const char *ptr) {   
   while (*ptr)                                    // send the entire string
     sendCharacter(*ptr++);                        // one character at a time
 }
@@ -717,17 +741,21 @@ void sendKochLesson(int lesson)                   // send letter/number groups..
 { 
   const int maxCount = 175;                       // full screen = 20 x 9
   int charCount = 0;
+  int wordsize;
+  
   newScreen();                                    // start with empty screen
   while (!button_pressed && 
   (charCount < maxCount))                         // full screen = 1 lesson 
-  {                            
-    for (int i=0; i<WORDSIZE; i++)                // break them up into "words"
+  {
+    wordsize = 1 + random(6);                            
+    for (int i=0; i<wordsize; i++)                // break them up into "words"
     {
       int c = koch[random(lesson+1)];             // pick a random character
       sendCharacter(c);                           // and send it
-      charCount ++;                               // keep track of #chars sent
+      charCount++;                                // keep track of #chars sent
     }
     sendCharacter(' ');                           // send a space between words
+    charCount++;
   }
 }
 
@@ -1042,6 +1070,118 @@ void sendFromSD()                                 // show files on SD card, get 
   int count = getFileList(list);                  // get list of files on the SD card
   int choice = fileMenu(list,count);              // display list & let user choose one
   sendFile(list[choice]);                         // output text & morse until user quits
+}
+
+// Downloads the content of the feedUrl into the page string
+void downloadRssFeed(String feedUrl, String& page) 
+{
+  WiFi.mode(WIFI_MODE_STA);
+  WiFi.begin(WIFI_STA_SSID, WIFI_STA_PWD);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.println("Connecting to WiFi..");
+  }
+ 
+  Serial.print("ESP32 IP on the WiFi network: ");
+  Serial.println(WiFi.localIP());
+
+  WiFiClient *wifiClient;
+  HTTPClient httpClient;
+
+  if(feedUrl.startsWith("https")) {
+    WiFiClientSecure *secureClient = new WiFiClientSecure();
+    secureClient->setInsecure();
+    wifiClient = secureClient;
+  } else {
+    wifiClient = new WiFiClient();
+  }
+  
+  if(httpClient.begin(*wifiClient, feedUrl)) {
+    int httpCode = httpClient.GET();
+    Serial.printf("Got page, %d bytes", httpClient.getSize());
+
+    if(httpCode == HTTP_CODE_OK) {
+      String payload = httpClient.getString();
+      Serial.println(payload);
+      page = payload;
+    } else {
+          Serial.printf("[HTTP] GET... failed, error: %s\n", httpClient.errorToString(httpCode).c_str());
+    }  
+    Serial.println(page);
+  }
+}
+
+String stripHtml(String s) {
+  int readIndex = 0;
+  int maxIndex = s.length();
+
+  // remove any html markup, that starts with &lt; and ends with &gt; ('<' and '>')
+  while(readIndex<maxIndex) {
+    int startTag = s.indexOf("&lt;", readIndex);
+    int endTag = s.indexOf("&gt;", readIndex);
+    int lenRemove = endTag + 4 - startTag;
+    s.remove(startTag, lenRemove);
+    maxIndex -= lenRemove;
+  }
+
+  // remove html entities or replace them with characters
+  s.replace("&apos;", "'");
+  s.replace("&#039;", "'");
+  s.replace("&amp;", "&");
+  s.replace("&#038;", "\"");
+
+  s.replace("<![CDATA[", "");
+  s.replace("]", "");
+  s.replace(">", "");
+  s.replace("<", "");
+  return s;
+}
+
+
+
+void sendNews() {
+
+  int feedNumber = fileMenu(feedNames, numberOfFeeds);
+  String feedUrl = feedUrls[feedNumber];
+
+  newScreen();                                    // clear screen below menu
+  button_pressed = false;                         // reset flag for new presses
+
+  String page;
+  downloadRssFeed(feedUrl, page);
+
+  // Parse the rss feed
+  // We're looking for title and description elements inside of item elements
+  int readIndex = 0;
+  int maxIndex = page.length();
+    
+  while(readIndex<maxIndex) {
+    readIndex = page.indexOf("<item>", readIndex);
+    int titleStart = page.indexOf("<title>", readIndex);
+    if( titleStart<0) break;
+    readIndex = titleStart + 7;
+    int titleEnd = page.indexOf("</title>", readIndex);
+    String title = page.substring(readIndex, titleEnd);
+    title = stripHtml(title);
+
+    sendString(title.c_str());
+    sendString(" ");
+
+    if(titleEnd<0) break;
+    readIndex = titleEnd + 8;
+    int descriptionStart = page.indexOf("<description>", readIndex);
+    if(descriptionStart<0) break;
+    readIndex = descriptionStart + 13;
+    int descriptionEnd = page.indexOf("</description>", readIndex);
+    if(descriptionEnd<0) break;
+    String description = page.substring(readIndex, descriptionEnd);
+    description = stripHtml(description);
+    readIndex = descriptionStart + description.length() + 14;
+
+    sendString(description.c_str());
+    sendString(" = ");
+  }  
 }
 
 
@@ -1856,7 +1996,10 @@ void showCharacter(char c, int row, int col)      // display a character at give
 
 void addCharacter(char c)
 {
-  showCharacter(c,textRow,textCol);               // display character & current row/col position
+  if(c==' ' && textCol==0) return;                    // don't start a line with a space
+
+  showCharacter(c,textRow,textCol);            // display character & current row/col position
+
   textCol++;                                      // go to next position on the current row
   if ((textCol>=MAXCOL) ||                        // are we at end of the row?
      ((c==' ') && (textCol>MAXCOL-7)))            // or at a wordspace thats near end of row?
@@ -2082,11 +2225,13 @@ void loop()
     case 00: sendKoch(); break;
     case 01: sendLetters(); break;
     case 02: sendWords(); break;
-    case 03: sendNumbers(); break;
-    case 04: sendMixedChars(); break;
-    case 05: sendFromSD(); break;
-    case 06: sendQSO(); break;
-    case 07: sendCallsigns(); break;
+   // case 03: sendNumbers(); break; removed to make space for sendNews
+    case 03: sendMixedChars(); break;
+    case 04: sendFromSD(); break;
+    case 05: sendQSO(); break;
+    case 06: sendCallsigns(); break;
+    case 07: sendNews(); break;
+
 
     case 10: practice(); break;
     case 11: copyOneChar(); break;
