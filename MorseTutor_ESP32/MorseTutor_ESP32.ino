@@ -45,8 +45,8 @@
 #define CHANNEL             1                     // Wifi channel number
 #define WIFI_AP_SSID      "W8BH Tutor"            // Wifi AP network name, connect to other tutor
 #define WIFI_AP_PWD       "9372947313"            // Wifi AP password
-#define WIFI_STA_SSID     "netwerkje"          // Wifi STA network name, connect to router
-#define WIFI_STA_PWD      "schalkhaar"      // Wifi STA password
+#define WIFI_STA_SSID     "YourWifiName"          // Wifi STA network name, connect to router
+#define WIFI_STA_PWD      "YourWifiPassword"      // Wifi STA password
 #define MAXBUFLEN         100                     // size of incoming character buffer
 #define CMD_ADDME        0x11                     // request to add this unit as a peer
 #define CMD_LEAVING      0x12                     // flag this unit as leaving
@@ -259,7 +259,7 @@ String feedUrls[] = {
         "http://www.southgatearc.org/sarc.rss",
         "https://feeds.bbci.co.uk/news/world/rss.xml",
         "http://rss.sciam.com/ScientificAmerican-News?format=xml",
-        "https://news.google.com/rss/search?q=technology&hl=en-US&gl=US&ceid=US:en",
+        "https://news.google.com/rss/search?q=technology+when%3C7d&hl=en-US&gl=US&ceid=US:en",
 };
 //===================================  Wireless Code  ===================================
 
