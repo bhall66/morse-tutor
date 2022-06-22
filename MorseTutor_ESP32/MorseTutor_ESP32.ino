@@ -292,8 +292,8 @@ void initESPNow()
 
 void configDeviceAP()
 {
-  char* SSID = WIFI_AP_SSID;                         // access point name for this device
-  char* Password = WIFI_AP_PWD;                      // password
+  char* SSID = WIFI_AP_SSID;                     // access point name for this device
+  char* Password = WIFI_AP_PWD;                  // password
   Serial.print("Starting Soft AP: ");
   Serial.println(WiFi.softAP(SSID,Password,CHANNEL,0)?
     "Ready": "FAILED");                           // set up WiFi access point
