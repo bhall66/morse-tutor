@@ -43,10 +43,10 @@
 
 //===================================  Wireless Constants ===============================
 #define CHANNEL             1                     // Wifi channel number
-#define WIFI_AP_SSID      "W8BH Tutor"            // Wifi AP network name, connect to other tutor
-#define WIFI_AP_PWD       "9372947313"            // Wifi AP password
-#define WIFI_STA_SSID     "YourWifiName"          // Wifi STA network name, connect to router
-#define WIFI_STA_PWD      "YourWifiPassword"      // Wifi STA password
+#define WIFI_AP_SSID   "W8BH Tutor"               // Wifi AP network name, connect to other tutor
+#define WIFI_AP_PWD    "9372947313"               // Wifi AP password
+#define WIFI_STA_SSID  "YourWifiName"             // Wifi STA network name, connect to router
+#define WIFI_STA_PWD   "YourWifiPassword"         // Wifi STA password
 #define MAXBUFLEN         100                     // size of incoming character buffer
 #define CMD_ADDME        0x11                     // request to add this unit as a peer
 #define CMD_LEAVING      0x12                     // flag this unit as leaving
@@ -292,8 +292,8 @@ void initESPNow()
 
 void configDeviceAP()
 {
-  char* SSID = WIFI_AP_SSID;                     // access point name for this device
-  char* Password = WIFI_AP_PWD;                  // password
+  char* SSID = WIFI_AP_SSID;                         // access point name for this device
+  char* Password = WIFI_AP_PWD;                      // password
   Serial.print("Starting Soft AP: ");
   Serial.println(WiFi.softAP(SSID,Password,CHANNEL,0)?
     "Ready": "FAILED");                           // set up WiFi access point
@@ -645,13 +645,15 @@ void dah() {                                      // send a dah
   }
 }
 
-void sendElements(int x) {                        // send string of bits as Morse      
+void sendElements(int x, bool lastElement=false) { // send string of bits as Morse      
   while (x>1) {                                   // stop when value is 1 (or less)
     if (x & 1) dit();                             // right-most bit is 1, so dit
     else dah();                                   // right-most bit is 0, so dah
     x >>= 1;                                      // rotate bits right
   }
-  characterSpace();                               // add inter-character spacing
+  if( !lastElement ) {
+      characterSpace();                           // add inter-character spacing
+  }
 }
 
 void roger() {
@@ -664,16 +666,21 @@ void roger() {
    For example:  5 = binary 0b0101.  The right-most bit is 1 so the first element is a dit.
    The next element to the left is a 0, so a dah follows.  Only a 1 remains after that, so
    the character is complete: dit-dah = morse character 'A'. 
+   If the caller indicates this is the lastCharacter, the function immediately returns after
+   sending the character, otherwise a inter-character wait is added
 */
 
-void sendCharacter(char c) {                      // send a single ASCII character in Morse
+void sendCharacter(char c, bool lastCharacter=false) { // send a single ASCII character in Morse
   if (button_pressed) return;                     // user wants to quit, so vamoose
   if (c<32) return;                               // ignore control characters
   if (c>96) c -= 32;                              // convert lower case to upper case
   if (c>90) return;                               // not a character
   addCharacter(c);                                // display character on LCD
+
   if (c==32) wordSpace();                         // space between words 
-  else sendElements(morse[c-33]);                 // send the character
+  else {
+    sendElements(morse[c-33], lastCharacter);     // send the character
+  }
   checkForSpeedChange();                          // allow change in speed while sending
   do {
     checkPause();
@@ -683,6 +690,11 @@ void sendCharacter(char c) {                      // send a single ASCII charact
 void sendString (const char *ptr) {   
   while (*ptr)                                    // send the entire string
     sendCharacter(*ptr++);                        // one character at a time
+}
+
+void sendStringNoWait (const char *ptr) {
+  while (*ptr)                                    // send the entire string
+    sendCharacter(*ptr++, !*ptr);                 // one character at a time, indicate if this is the last character
 }
 
 void sendMorseWord (char *ptr) {             
@@ -1386,7 +1398,7 @@ void mimic1(char *text)
 {
   char ch, response[20];                                                          
   textRow=1; textCol=6;                           // set position of text 
-  sendString(text);                               // display text & morse it
+  sendStringNoWait(text);                         // display text & morse it
   strcpy(response,"");                            // start with empty response
   textRow=2; textCol=6;                           // set position of response
   while (!button_pressed && !ditPressed()         // wait until user is ready
