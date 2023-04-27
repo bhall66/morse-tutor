@@ -13,8 +13,9 @@
  **************************************************************************/
 
 //===================================  INCLUDES ========================================= 
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+#include "SPI.h"
+#include "Adafruit_GFX_AS.h"
+#include "Adafruit_ILI9341_AS.h"
 
 //===================================  Hardware Connections =============================
 #define TFT_DC            PA0                     // Display "DC" pin
