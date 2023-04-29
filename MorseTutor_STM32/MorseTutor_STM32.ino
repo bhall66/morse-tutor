@@ -1,7 +1,7 @@
 /**************************************************************************
        Title:   Morse Tutor
       Author:   Bruce E. Hall, w8bh.net
-        Date:   27 Apr 2023
+        Date:   28 Apr 2023
     Hardware:   STM32F103C, ILI9341 TFT display
     Software:   Arduino IDE 1.8.19; STM32 support via stm32duino
        Legal:   Copyright (c) 2023  Bruce E. Hall.
@@ -225,8 +225,7 @@ char myCall[10] = "W8BH";
 int textColor   = TEXTCOLOR;                      // foreground (text) color
 int bgColor     = BG;                             // background (screen) color
 int brightness  = 100;                            // backlight level (range 0-100%)
-int startItem   = 0;                              // startup activity.  0 = main menu
-
+int startItem   = -1;                             // startup activity.  -1 = main menu
 
 
 //===================================  Menu Variables ===================================
