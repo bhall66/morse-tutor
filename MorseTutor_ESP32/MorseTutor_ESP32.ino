@@ -89,6 +89,10 @@
 const word colors[] = {BLACK,BLUE,NAVY,RED,MAROON,GREEN,LIME,CYAN,TEAL,PURPLE,
   PINK,YELLOW,ORANGE,BROWN,WHITE,OLIVE,SILVER,GRAY,DARKGRAY};
 
+//===================================  Training Method Constants ========================
+#define KOCH                0                     // Koch Method
+#define CW_ACADEMY          1                     // CW Academy Method
+
 // ==================================  Menu Constants ===================================
 #define DISPLAYWIDTH      320                     // Number of LCD pixels in long-axis
 #define DISPLAYHEIGHT     240                     // Number of LCD pixels in short-axis
@@ -142,7 +146,10 @@ char *cities[]    = {"DAYTON, OH", "HADDONFIELD, NJ", "MURRYSVILLE, PA", "BALTIM
 char *rigs[]      = {"YAESU FT101", "KENWOOD 780", "ELECRAFT K3", "HOMEBREW", "QRPLABS QCX", "ICOM 7410", "FLEX 6400"};
 char punctuation[]= "!@$&()-+=,.:;'/";
 char prefix[]     = {'A', 'W', 'K', 'N'};
+char *methods[]   = {"Koch", "CW Academy"};
 char koch[]       = "KMRSUAPTLOWI.NJEF0Y,VG5/Q9ZH38B?427C1D6X";
+char cwa_chars[]  = "AENTIOS14DHLR25CUMW36?FY,GPQ79/BV+JK08=XZ.*#";
+int cwa[]         = {3, 8, 14, 16, 21, 24, 30, 33, 38, 43};
 byte morse[] = {                                  // Each character is encoded into an 8-bit byte:
   0b01001010,        // ! exclamation        
   0b01101101,        // " quotation          
@@ -153,7 +160,7 @@ byte morse[] = {                                  // Each character is encoded i
   0b01100001,        // ' apostrophe
   0b00110010,        // ( open paren
   0b01010010,        // ) close paren
-  0b0,               // * asterisk                // No Morse
+  0b10101110,        // * asterisk                // No Morse, mapped to BK
   0b00110101,        // + plus or ~AR
   0b01001100,        // , comma
   0b01011110,        // - hypen
@@ -211,6 +218,8 @@ int ditPaddle   = PADDLE_A;                       // digital pin attached to dit
 int dahPaddle   = PADDLE_B;                       // digital pin attached to dah paddle
 int pitch       = DEFAULTPITCH;                   // frequency of audio output, in Hz
 int kochLevel   = 1;                              // current Koch lesson #
+int cwaLevel    = 1;                              // current CW Academy lesson #
+int method      = 0;                              // current training method
 int score       = 0;                              // copy challange score
 int hits        = 0;                              // copy challange correct #
 int misses      = 0;                              // copy channange incorrect #
@@ -232,9 +241,9 @@ int startItem   = 0;                              // startup activity.  0 = main
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
 char *mainMenu[] = {" Receive ", "  Send  ", "Config "};
-char *menu0[]    = {" Koch    ", " Letters ", " Words   ", " Numbers ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " Exit    "};
+char *menu0[]    = {" Training", " Letters ", " Words   ", " Numbers ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " Exit    "};
 char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", " Flashcrd", " Head Cpy", " Two-Way ", " Exit    "};
-char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Callsign", " Screen  ", " Defaults", " Exit    "};
+char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Method  ", " Callsign", " Screen  ", " Defaults", " Exit    "};
 
 
 //===================================  Wireless Code  ===================================
@@ -711,6 +720,18 @@ void checkPause()
 }
 
 
+//===================================  CW Training  =====================================
+void sendTraining()
+{
+  switch(method)
+  {
+  case KOCH: sendKoch(); break;
+  case CW_ACADEMY: sendCwa(); break;
+    default: ;
+  }
+  clearMenu();
+}
+
 //===================================  Koch Method  =====================================
 
 void sendKochLesson(int lesson)                   // send letter/number groups...
@@ -780,6 +801,90 @@ void sendKoch()
         if ((kochLevel==lesson) &&                // only increment if current best
             (kochLevel<ELEMENTS(koch)))           // limit to max level
           kochLevel++;                            // advance to next level
+        saveConfig();                             // save it in EEPROM
+        delay(1000);                              // give time for user to release dit
+        break;                                    // go to next lesson
+      }
+      if (dahPressed()) break;                    // dah = repeat same lesson
+    }
+  }
+}
+
+
+//===================================  CW Academy Method  ===============================
+
+
+void sendCwaLesson(int chars)                     // send letter/number groups...
+{
+  const int maxCount = 175;                       // full screen = 20 x 9
+  int charCount = 0;
+  newScreen();                                    // start with empty screen
+  while (!button_pressed &&
+         (charCount < maxCount))                  // full screen = 1 lesson
+  {
+    for (int i = 0; i < WORDSIZE; i++)            // break them up into "words"
+    {
+      int c = cwa_chars[random(chars + 1)];       // pick a random character
+      sendCharacter(c);                           // and send it
+      charCount++;                                // keep track of #chars sent
+    }
+    sendCharacter(' ');                           // send a space between words
+  }
+}
+
+void introCwaLesson(int lesson)                   // helper fn for getCwaLessonNumber()
+{
+  newScreen();                                    // start with clean screen
+  tft.print("You are in lesson ");
+  tft.println(lesson+1);                          // show lesson number
+  tft.println("\nCharacters: ");
+  tft.setTextColor(CYAN);
+  tft.print(" ");
+  for (int i = 0; i <= cwa[lesson]; i++)          // show characters in this lession
+  {
+    tft.print(cwa_chars[i]);
+    tft.print(" ");
+  }
+  tft.setTextColor(textColor);
+  tft.println("\n\nPress <dit> to begin");
+}
+
+int getCwaLessonNumber()
+{
+  int lesson = cwaLevel;                          // start at current level
+  introCwaLesson(lesson);                         // display lesson number
+  while (!button_pressed && !ditPressed())
+  {
+    int dir = readEncoder();
+    if (dir != 0)                                 // user rotated encoder knob:
+    {
+      lesson += dir;                              // ...so change lesson up/down
+      if (lesson<0) lesson = 0;                   // dont go below 0 
+      if (lesson>cwaLevel) lesson = cwaLevel;     // dont go above maximum
+      introCwaLesson(lesson);                     // show new lesson number
+    }
+  }
+  return lesson;
+}
+
+void sendCwa()
+{
+  while (!button_pressed)
+  {
+    setTopMenu("CW Academy lesson");
+    int lesson = getCwaLessonNumber();            // allow user to select lesson
+    if (button_pressed)
+      return;                                     // user quit, so sad
+    sendCwaLesson(cwa[lesson]);                   // do the lesson
+    setTopMenu("Get 90%? Dit=YES, Dah=NO");       // ask user to score lesson
+    while (!button_pressed)
+    {                                             // wait for user response
+      if (ditPressed())                           // dit = user advances to next level
+      {
+        roger();                                  // acknowledge success
+        if ((cwaLevel==lesson) &&                 // only increment if current best
+            (cwaLevel<ELEMENTS(cwa)))             // limit to max level
+          cwaLevel++;                             // advance to next level
         saveConfig();                             // save it in EEPROM
         delay(1000);                              // give time for user to release dit
         break;                                    // go to next lesson
@@ -1409,6 +1514,8 @@ void saveConfig()
   EEPROM.write(22,lowByte(textColor));
   EEPROM.write(23,highByte(bgColor));             // save background color
   EEPROM.write(24,lowByte(bgColor));
+  EEPROM.write(25,cwaLevel);                      // save current CW Academy lesson #
+  EEPROM.write(26,method);                        // save training method
   EEPROM.commit();                                // ESP32 only
 }
 
@@ -1433,6 +1540,8 @@ void loadConfig()
                 + EEPROM.read(22);                // and color low byte
     bgColor     =(EEPROM.read(23)<<8)
                 + EEPROM.read(24);
+    cwaLevel    = EEPROM.read(25);
+    method      = EEPROM.read(26);
     checkConfig();                                // ensure loaded settings are valid   
   }
 }
@@ -1447,6 +1556,10 @@ void checkConfig()                                // ensure config settings are 
     pitch = DEFAULTPITCH;
   if ((kochLevel<0)||(kochLevel>ELEMENTS(koch)))  // validate koch lesson number
     kochLevel = 0;
+  if ((cwaLevel<0)||(cwaLevel>ELEMENTS(cwa)))     // validate cw academy lesson number
+    cwaLevel = 0;
+  if ((method<0)||(method>1))                     // validate training method
+    method = 0;
   if (xWordSpaces>MAXWORDSPACES)                  // validate word spaces
      xWordSpaces = 0;
   if (!isAlphaNumeric(myCall[0]))                 // validate callsign
@@ -1472,6 +1585,8 @@ void useDefaults()                                // if things get messed up...
   ditPaddle   = PADDLE_A;
   dahPaddle   = PADDLE_B;
   kochLevel   = 1;
+  cwaLevel    = 0;
+  method      = 0;
   usePaddles  = true;
   xWordSpaces = 0;
   strcpy(myCall,"W8BH");
@@ -1783,6 +1898,33 @@ void configKey()
   else sendCharacter('B');
 }
 
+void configMethod()
+{
+  int x=COLSPACING,y;
+  int numMethods = ELEMENTS(methods);
+  button_pressed = false;                         // reset button flag
+  tft.print("Training Method");
+
+  while (!button_pressed)                         // exit on button press
+  {
+    int dir = readEncoder();                      // check for encoder movement
+    if (dir)                                      // it moved!    
+    {
+      method += dir;                              // go to next/prev item
+      method = constrain(method,0,numMethods-1);  // keep within given methods
+    }
+    for (int i=0; i<numMethods; i++)              // show method options
+    {
+      y = 2*TOPMARGIN + i*ROWSPACING;             // calc y-coord of current item
+      if (i == method)                            // highlight selected method
+        showMenuItem(methods[i],x,y,SELECTFG,SELECTBG);
+      else
+        showMenuItem(methods[i],x,y,FG,bgColor);
+    }
+  }
+  saveConfig();
+}
+
 void setCallsign() {
   char ch, response[20];   
   tft.print("\n Enter Callsign:");
@@ -2080,7 +2222,7 @@ void loop()
   score=0; hits=0; misses=0;                      // restart score for copy challenges  
   switch(selection)                               // do action requested by user
   {
-    case 00: sendKoch(); break;
+    case 00: sendTraining(); break;
     case 01: sendLetters(); break;
     case 02: sendWords(); break;
     case 03: sendNumbers(); break;
@@ -2102,9 +2244,10 @@ void loop()
     case 21: checkSpeed(); break;
     case 22: setPitch(); break;
     case 23: configKey(); break;
-    case 24: setCallsign(); break;
-    case 25: setScreen(); break;
-    case 26: useDefaults(); break;
+    case 24: configMethod(); break;
+    case 25: setCallsign(); break;
+    case 26: setScreen(); break;
+    case 27: useDefaults(); break;
     default: ;
   }  
 }
