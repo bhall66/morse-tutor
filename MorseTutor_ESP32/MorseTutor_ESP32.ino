@@ -231,7 +231,7 @@ int startItem   = 0;                              // startup activity.  0 = main
 
 //===================================  Menu Variables ===================================
 int  menuCol=0, textRow=0, textCol=0;
-char *mainMenu[] = {" Receive ", "  Send  ", "Config "};        
+char *mainMenu[] = {" Receive ", "  Send  ", "Config "};
 char *menu0[]    = {" Koch    ", " Letters ", " Words   ", " Numbers ", " Mixed   ", " SD Card ", " QSO     ", " Callsign", " Exit    "};
 char *menu1[]    = {" Practice", " Copy One", " Copy Two", " Cpy Word", " Cpy Call", " Flashcrd", " Head Cpy", " Two-Way ", " Exit    "};
 char *menu2[]    = {" Speed   ", " Chk Spd ", " Tone    ", " Key     ", " Callsign", " Screen  ", " Defaults", " Exit    "};
@@ -774,16 +774,17 @@ void sendKoch()
     sendKochLesson(lesson);                       // do the lesson                      
     setTopMenu("Get 90%? Dit=YES, Dah=NO");       // ask user to score lesson
     while (!button_pressed) {                     // wait for user response
-       if (ditPressed())                          // dit = user advances to next level
-       {  
-         roger();                                 // acknowledge success
-         if (kochLevel<ELEMENTS(koch))        
-           kochLevel++;                           // advance to next level
-         saveConfig();                            // save it in EEPROM
-         delay(1000);                             // give time for user to release dit
-         break;                                   // go to next lesson
-       }
-       if (dahPressed()) break;                   // dah = repeat same lesson
+      if (ditPressed())                           // dit = user advances to next level
+      {  
+        roger();                                  // acknowledge success
+        if ((kochLevel==lesson) &&                // only increment if current best
+            (kochLevel<ELEMENTS(koch)))           // limit to max level
+          kochLevel++;                            // advance to next level
+        saveConfig();                             // save it in EEPROM
+        delay(1000);                              // give time for user to release dit
+        break;                                    // go to next lesson
+      }
+      if (dahPressed()) break;                    // dah = repeat same lesson
     }
   }
 }
@@ -1272,7 +1273,7 @@ void showHitsAndMisses(int hits, int misses)      // helper fn for mimic2()
   displayNumber(misses,RED,x,y2,wd,ht);           // show misses in red                               
 }
 
-void headCopy()                                  // show a callsign & see if user can copy it
+void headCopy()                                   // show a callsign & see if user can copy it
 {
   char text[10]; 
   while (!button_pressed)                      
@@ -1416,24 +1417,24 @@ void loadConfig()
   int flag = EEPROM.read(0);                      // saved values been saved before?
   if (flag==42)                                   // yes, so load saved parameters
   {
-     charSpeed   = EEPROM.read(1);
-     codeSpeed   = EEPROM.read(2);
-     pitch       = EEPROM.read(3)*10;
-     ditPaddle   = EEPROM.read(4);
-     kochLevel   = EEPROM.read(5);
-     usePaddles  = EEPROM.read(6);
-     xWordSpaces = EEPROM.read(7);
-     for (int i=0; i<10; i++)
-       myCall[i] = EEPROM.read(8+i); 
-     keyerMode   = EEPROM.read(18);
-     startItem   = EEPROM.read(19);
-     brightness  = EEPROM.read(20);
-     textColor   =(EEPROM.read(21)<<8)            // add color high byte
-                 + EEPROM.read(22);               // and color low byte
-     bgColor     =(EEPROM.read(23)<<8)
-                 + EEPROM.read(24);
-     checkConfig();                               // ensure loaded settings are valid   
-  } 
+    charSpeed   = EEPROM.read(1);
+    codeSpeed   = EEPROM.read(2);
+    pitch       = EEPROM.read(3)*10;
+    ditPaddle   = EEPROM.read(4);
+    kochLevel   = EEPROM.read(5);
+    usePaddles  = EEPROM.read(6);
+    xWordSpaces = EEPROM.read(7);
+    for (int i=0; i<10; i++)
+      myCall[i] = EEPROM.read(8+i); 
+    keyerMode   = EEPROM.read(18);
+    startItem   = EEPROM.read(19);
+    brightness  = EEPROM.read(20);
+    textColor   =(EEPROM.read(21)<<8)             // add color high byte
+                + EEPROM.read(22);                // and color low byte
+    bgColor     =(EEPROM.read(23)<<8)
+                + EEPROM.read(24);
+    checkConfig();                                // ensure loaded settings are valid   
+  }
 }
 
 void checkConfig()                                // ensure config settings are valid
@@ -1592,7 +1593,7 @@ void changeTextColor()
 
 void changeBrightness()
 {
-  const int x=180,y=100;                           // screen position
+  const int x=180,y=100;                          // screen position
   tft.println("\n\n\nBrightness:");
   tft.setTextSize(4);
   tft.setCursor(x,y);
