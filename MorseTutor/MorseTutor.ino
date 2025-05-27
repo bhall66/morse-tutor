@@ -1,16 +1,21 @@
+
 /**************************************************************************
-       Title:   Morse Tutor
-      Author:   Bruce E. Hall, w8bh.net
-        Date:   09 Sep 2020
-    Hardware:   STM32F103C, 3.2" ILI9341 TFT display
-    Software:   Arduino IDE 1.8.13; STM32 support via dan.drown.org
-       Legal:   Copyright (c) 2020  Bruce E. Hall.
-                Open Source under the terms of the MIT License. 
+        Title:   Morse Tutor
+       Author:   Bruce E. Hall, w8bh.net
+         Date:   09 Sep 2020
+       Ported:   Sam Rausch, KC3VUR
+         Date:   27 May 2025
+ Port Changes:   Altered to run on Pi Pico w/ 2.8" ILI9341 display, removed
+                 dimming support
+Orig Hardware:   STM32F103C, 3.2" ILI9341 TFT display
+     Software:   Arduino IDE 1.8.13; STM32 support via dan.drown.org
+        Legal:   Copyright (c) 2020  Bruce E. Hall.
+                 Open Source under the terms of the MIT License. 
     
- Description:   Practice sending & receiving morse code
-                Inspired by Jack Purdum's "Morse Code Tutor"
+  Description:   Practice sending & receiving morse code
+                 Inspired by Jack Purdum's "Morse Code Tutor"
                 
-                >> THIS VERSION UNDER DEVELOPMENT <<<
+                 >> THIS VERSION UNDER DEVELOPMENT <<<
 
  **************************************************************************/
 
@@ -19,23 +24,23 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 #include "EEPROM.h"
-#include "SD.h"
+#include <SD.h>
 
 //===================================  Hardware Connections =============================
-#define TFT_DC            PA0                     // Display "DC" pin
-#define TFT_CS            PA1                     // Display "CS" pin
-#define TFT_MOSI          PA7                     // Display "MOSI" pin
-#define TFT_SCK           PA5                     // Display "SCK" pin    
-#define SD_CS             PA4                     // SD card "CS" pin
-#define SD_MISO           PA6                     // SD card "MISO" pin
-#define ENCODER_A         PA9                     // Rotary Encoder output A
-#define ENCODER_B         PA8                     // Rotary Encoder output B
-#define ENCODER_BUTTON    PB15                    // Rotary Encoder switch
-#define PADDLE_A          PB8                     // Morse Paddle "dit"
-#define PADDLE_B          PB7                     // Morse Paddle "dah"
-#define AUDIO             PA2                     // Audio output
-#define BACKLIGHT         PB1                     // Display Backlight control
-#define LED               PC13                    // onboard LED pin
+#define TFT_DC            20                      // Display "DC" pin
+#define TFT_CS            21                      // Display "CS" pin
+#define TFT_MOSI          19                      // Display "MOSI" pin
+#define TFT_SCK           18                      // Display "SCK" pin    
+#define SD_CS             11                      // SD card "CS" pin
+#define SD_MISO           16                      // SD card "MISO" pin
+#define ENCODER_A         8                       // Rotary Encoder output A
+#define ENCODER_B         9                       // Rotary Encoder output B
+#define ENCODER_BUTTON    27                      // Rotary Encoder switch
+#define PADDLE_A          6                       // Morse Paddle "dit"
+#define PADDLE_B          7                       // Morse Paddle "dah"
+#define AUDIO             10                       // Audio output
+#define BACKLIGHT         9                       // Display Backlight control
+#define LED               0                       // onboard LED pin
 #define SCREEN_ROTATION     3                     // landscape mode: use '1' or '3'
 #define PNP_DRIVER        true                    // true = using PNP to drive backlight
 
@@ -98,7 +103,7 @@ const word colors[] = {BLACK,BLUE,NAVY,RED,MAROON,GREEN,LIME,CYAN,TEAL,PURPLE,
 #define ELEMENTS(x) (sizeof(x) / sizeof(x[0]))    // Handy macro for determining array sizes
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
-HardwareTimer timer(3);                           // Need timer3 access for backlight PWM
+//HardwareTimer timer(3);                           // Need timer3 access for backlight PWM
 
 //===================================  Rotary Encoder Variables =========================
 volatile int      rotaryCounter    = 0;           // "position" of rotary encoder (increments CW) 
@@ -1145,23 +1150,24 @@ void twoWay()                                     // wireless QSO between units
 
 void saveConfig()
 {
-  EEPROM.update(0,42);                            // the answer to everything
-  EEPROM.update(1,charSpeed);                     // save the character speed in wpm
-  EEPROM.update(2,codeSpeed);                     // save overall code speed in wpm
-  EEPROM.update(3,pitch/10);                      // save pitch as 1/10 of value
-  EEPROM.update(4,ditPaddle);                     // save pin corresponding to 'dit'
-  EEPROM.update(5,kochLevel);                     // save current Koch lesson #
-  EEPROM.update(6,usePaddles);                    // save key type
-  EEPROM.update(7,xWordSpaces);                   // save extra word spaces
+  EEPROM.write(0,42);                            // the answer to everything
+  EEPROM.write(1,charSpeed);                     // save the character speed in wpm
+  EEPROM.write(2,codeSpeed);                     // save overall code speed in wpm
+  EEPROM.write(3,pitch/10);                      // save pitch as 1/10 of value
+  EEPROM.write(4,ditPaddle);                     // save pin corresponding to 'dit'
+  EEPROM.write(5,kochLevel);                     // save current Koch lesson #
+  EEPROM.write(6,usePaddles);                    // save key type
+  EEPROM.write(7,xWordSpaces);                   // save extra word spaces
   for (int i=0; i<10; i++)                        // save callsign,
-    EEPROM.update(8+i,myCall[i]);                 // one letter at a time
-  EEPROM.update(18,keyerMode);                    // save keyer mode (1=A, 2=B)
+    EEPROM.write(8+i,myCall[i]);                 // one letter at a time
+  EEPROM.write(18,keyerMode);                    // save keyer mode (1=A, 2=B)
   EEPROM.write(19,startItem);                     // save startup activity
   EEPROM.write(20,brightness);                    // save screen brightness
   EEPROM.write(21,highByte(textColor));           // save text color
   EEPROM.write(22,lowByte(textColor));
   EEPROM.write(23,highByte(bgColor));             // save background color
   EEPROM.write(24,lowByte(bgColor));
+  EEPROM.commit();
 }
 
 void loadConfig()
@@ -1361,7 +1367,7 @@ void changeBrightness()
       tft.fillRect(x,y,100,40,bgColor);           // erase old value
       tft.setCursor(x,y);
       tft.print(brightness);                      // and display new value
-      setBrightness(brightness);                  // update screen brightness
+//#      setBrightness(brightness);                  // update screen brightness
     }
   }
 }
@@ -1721,20 +1727,20 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
 
  
 
-void setBrightness(int level)                     // level 0 (off) to 100 (full on)       
-{
-  if (PNP_DRIVER) level = 100-level;              // invert levels if PNP driver present
-  pwmWrite(BACKLIGHT, level*72);                  // conver 0-100 to 0-7200
-  delay(5);  
-}
-
-void initBacklight(int brightness)
-{
-  pinMode(BACKLIGHT, PWM);                        // set up backlight as PWM  
-  timer.setPrescaleFactor(1);                     // do not scale 72MHz sys clock
-  timer.setOverflow(7200);                        // 72MHz clock/7200 = 10KHz PWM
-  setBrightness(brightness);                      // set initial brightness (0-100)
-}
+//void setBrightness(int level)                     // level 0 (off) to 100 (full on)       
+//#{
+//#  if (PNP_DRIVER) level = 100-level;              // invert levels if PNP driver present
+//#  pwmWrite(BACKLIGHT, level*72);                  // conver 0-100 to 0-7200
+//#  delay(5);  
+//#}
+//#
+//#void initBacklight(int brightness)
+//#{
+//#  pinMode(BACKLIGHT, PWM);                        // set up backlight as PWM  
+//#  #timer.setPrescaleFactor(1);                     // do not scale 72MHz sys clock
+//#  #timer.setOverflow(7200);                        // 72MHz clock/7200 = 10KHz PWM
+//#  setBrightness(brightness);                      // set initial brightness (0-100)
+//#}
 
 void initEncoder()
 {
@@ -1766,19 +1772,20 @@ void initSD()
 
 void initEEPROM()
 {
-  EEPROM.PageBase0 = 0x801F000;                   // EEPROM starts here
-  EEPROM.PageBase1 = 0x801F800;
-  EEPROM.PageSize  = 0x400;                       // STM32F103CB has 1K pages
-  EEPROM.init();
+//  EEPROM.PageBase0 = 0x801F000;                   // EEPROM starts here
+//  EEPROM.PageBase1 = 0x801F800;
+//  EEPROM.PageSize  = 0x400;                       // STM32F103CB has 1K pages
+//  EEPROM.init();
+  EEPROM.begin(4096);
 }
 
 void initScreen()
 {
-  initBacklight(0);                               // eliminate startup flicker
+//#  initBacklight(0);                               // eliminate startup flicker
   tft.begin();                                    // initialize screen object
   tft.setRotation(SCREEN_ROTATION);               // landscape mode: use '1' or '3'
   tft.fillScreen(BLACK);                          // start with blank screen
-  setBrightness(100);                             // start screen full brighness
+//#  setBrightness(100);                             // start screen full brighness
 }
 
 void splashScreen()                               // not splashy at all!
@@ -1809,7 +1816,7 @@ void setup()
   initMorse();                                    // attach paddles & adjust speed
   delay(2000);                                    // keep splash screen on for a while
   clearScreen();
-  setBrightness(brightness);                      // reduce brightness to desired level
+//#  setBrightness(brightness);                      // reduce brightness to desired level
 }
 
 
