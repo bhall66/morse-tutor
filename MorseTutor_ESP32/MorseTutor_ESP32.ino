@@ -1,26 +1,24 @@
 /**************************************************************************
-       Title:   Morse Tutor ESP32						   
+       Title:   Morse Tutor ESP32
       Author:   Bruce E. Hall, w8bh.net
-        Date:   07 Jan 2022
+        Date:   07 May 2026
     Hardware:   ESP32 DevBoard "HiLetGo", ILI9341 TFT display
-    Software:   Arduino IDE 1.8.19
-                ESP32 by Expressif Systems 1.0.6
-                Adafruit GFX Library 1.5.3
-                Adafruit ILI9341 1.5.6
-       Legal:   Copyright (c) 2020  Bruce E. Hall.
+    Software:   Arduino IDE 2.3.8
+                ESP32 board by Expressif Systems 3.3.8
+                Adafruit GFX Library 1.11.10
+                Adafruit ILI9341 1.6.1
+       Legal:   Copyright (c) 2026  Bruce E. Hall.
                 Open Source under the terms of the MIT License. 
     
  Description:   Practice sending & receiving morse code
                 Inspired by Jack Purdum's "Morse Code Tutor"
                 
-                >> THIS VERSION UNDER DEVELOPMENT <<<
-
  **************************************************************************/
 
 
 //===================================  INCLUDES ========================================= 
-#include "Adafruit_GFX.h"                         // Version 1.5.3
-#include "Adafruit_ILI9341.h"                     // Version 1.5.6
+#include "Adafruit_GFX.h"                         // Version 1.11.10
+#include "Adafruit_ILI9341.h"                     // Version 1.6.1
 #include "EEPROM.h"
 #include "SD.h"
 #include "esp_now.h"
@@ -283,7 +281,7 @@ void setStatusLED (int color)
 }
 
 // callback when data is sent
-void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+void onDataSent(const wifi_tx_info_t *info, esp_now_send_status_t status)
 {
   if (status == ESP_NOW_SEND_SUCCESS)             // was data recieved correctly?
     setStatusLED(GREEN);                          // yes, so turn LED green
@@ -291,7 +289,7 @@ void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 }
 
 // callback when data is received
-void onDataRecv(const uint8_t *mac_add, const uint8_t *data, int data_len)
+void onDataRecv(const esp_now_recv_info *info, const uint8_t *data, int data_len)
 {
   if (data_len!=1) return;                        // only accept one-byte packets
   setStatusLED(GREEN);                            // green status LED for data received
@@ -300,7 +298,7 @@ void onDataRecv(const uint8_t *mac_add, const uint8_t *data, int data_len)
   Serial.print(", '");
   Serial.println((char)*data);
   if (*data==CMD_ADDME)                           // command from unit #2: add me as a peer
-    addPeer2(mac_add);                            // add unit #2 as a peer
+    addPeer2(info->src_addr);                     // add unit #2 as a peer
   else if (*data==CMD_LEAVING)                    // status command from other unit: quitting
   {
     setStatusLED(RED);                            // so let user know
@@ -546,13 +544,13 @@ int readEncoder(int numTicks = ENCODER_TICKS)
 void keyUp()                                      // device-dependent actions 
 {                                                 // when key is up:
   digitalWrite(LED,0);                            // turn off LED
-  ledcWrite(0,0);                                 // and turn off sound
+  ledcWriteTone(AUDIO,0);                         // and turn off sound
 }
 
 void keyDown()                                    // device-dependent actions
 {                                                 // when key is down:
   if (!SUPPRESSLED) digitalWrite(LED,1);          // turn on LED
-  ledcWriteTone(0,pitch);                         // and turn on sound
+  ledcWriteTone(AUDIO,pitch);                     // and turn on sound
 }
 
 bool ditPressed()
@@ -944,7 +942,7 @@ int getFileList  (char list[][FNAMESIZE])         // gets list of files on SD ca
     if (!entry) break;                            // leave if there aren't any more
     if (!entry.isDirectory() &&                   // ignore directory names
     (entry.name()[0] != '_'))                     // ignore hidden "_name" Mac files
-      strcpy(list[count++],&entry.name()[1]);     // add SD file to the list (ESP32: remove '/')
+      strcpy(list[count++],&entry.name()[0]);     // add SD file to the list (ESP32: remove '/')
     entry.close();                                // close the file
   }
   root.close(); 
@@ -2008,8 +2006,7 @@ void initEncoder()
 
 void initMorse()
 {
-  ledcSetup(0,1E5,12);                            // smoke & mirrors for ESP32
-  ledcAttachPin(AUDIO,0);                         // since tone() not yet supported
+  ledcAttach(AUDIO,10000,10);                     // esp32 board version 3+
   pinMode(LED,OUTPUT);                            // LED, but could be keyer output instead
   pinMode(PADDLE_A, INPUT_PULLUP);                // two paddle inputs, both active low
   pinMode(PADDLE_B, INPUT_PULLUP);
@@ -2046,7 +2043,7 @@ void splashScreen()                               // not splashy at all!
   tft.setTextSize(1);
   tft.setCursor(50,220);
   tft.setTextColor(WHITE);
-  tft.print("Copyright (c) 2020, Bruce E. Hall"); // legal small print
+  tft.print("Copyright (c) 2026, Bruce E. Hall"); // legal small print
   tft.setTextSize(2);
 }
 
