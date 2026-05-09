@@ -15,7 +15,7 @@
                 
  **************************************************************************/
 
-
+#define VERSION "V 1.1 May 8, 2026"
 //===================================  INCLUDES ========================================= 
 #include "Adafruit_GFX.h"                         // Version 1.11.10
 #include "Adafruit_ILI9341.h"                     // Version 1.6.1
@@ -76,7 +76,7 @@
 #define PURPLE         0x780F                
 #define PINK           0xF81F
 #define YELLOW         0xFFE0
-#define ORANGE         0xFD20
+#define ORANGE         0xFB20
 #define BROWN          0x79E0
 #define WHITE          0xFFFF
 #define OLIVE          0x7BE0
@@ -131,16 +131,17 @@ char *words[]     = {"THE", "OF", "AND", "TO", "A", "IN", "THAT", "IS", "WAS", "
                      "MAN", "ME", "EVEN", "MOST", "MADE", "AFTER", "ALSO", "DID", "MANY", "OFF", 
                      "BEFORE", "MUST", "WELL", "BACK", "THROUGH", "YEARS", "MUCH", "WHERE", "YOUR", "WAY"  
                     };
-char *antenna[]   = {"YAGI", "DIPOLE", "VERTICAL", "HEXBEAM", "MAGLOOP"};
+char *antenna[]   = {"YAGI", "DIPOLE", "VERTICAL", "HEXBEAM", "MAGLOOP", "EFHW"};
 char *weather[]   = {"HOT", "SUNNY", "WARM", "CLOUDY", "RAINY", "COLD", "SNOWY", "CHILLY", "WINDY", "FOGGY"};
 char *names[]     = {"WAYNE", "TYE", "DARREN", "MICHAEL", "SARAH", "DOUG", "FERNANDO", "CHARLIE", "HOLLY",
-                     "KEN", "SCOTT", "DAN", "ERVIN", "GENE", "PAUL", "VINCENT"};
+                     "KEN", "SCOTT", "DAN", "ERVIN", "GENE", "PAUL", "VINCENT","GLENN"};
 char *cities[]    = {"DAYTON, OH", "HADDONFIELD, NJ", "MURRYSVILLE, PA", "BALTIMORE, MD", "ANN ARBOR, MI", 
                      "BOULDER, CO", "BILLINGS, MT", "SANIBEL, FL", "CIMMARON, NM", "TYLER, TX", "OLYMPIA, WA"};
 char *rigs[]      = {"YAESU FT101", "KENWOOD 780", "ELECRAFT K3", "HOMEBREW", "QRPLABS QCX", "ICOM 7410", "FLEX 6400"};
 char punctuation[]= "!@$&()-+=,.:;'/";
 char prefix[]     = {'A', 'W', 'K', 'N'};
 char koch[]       = "KMRSUAPTLOWI.NJEF0Y,VG5/Q9ZH38B?427C1D6X";
+
 byte morse[] = {                                  // Each character is encoded into an 8-bit byte:
   0b01001010,        // ! exclamation        
   0b01101101,        // " quotation          
@@ -209,6 +210,7 @@ int ditPaddle   = PADDLE_A;                       // digital pin attached to dit
 int dahPaddle   = PADDLE_B;                       // digital pin attached to dah paddle
 int pitch       = DEFAULTPITCH;                   // frequency of audio output, in Hz
 int kochLevel   = 1;                              // current Koch lesson #
+int maxkoch = ELEMENTS(koch)-1;                   // number of koch lessons
 int score       = 0;                              // copy challange score
 int hits        = 0;                              // copy challange correct #
 int misses      = 0;                              // copy channange incorrect #
@@ -303,6 +305,7 @@ void onDataRecv(const esp_now_recv_info *info, const uint8_t *data, int data_len
   {
     setStatusLED(RED);                            // so let user know
     Serial.println("Peer just left network");
+    displayHelp(" Peer just left network.");
   }
   else enQueue(*data);                            // put recieved data into queue
 }
@@ -337,6 +340,7 @@ bool networkFound()                               // Scan for peers in AP mode
 void addPeer2(const uint8_t *peerMacAddress)
 {
   Serial.print("Received request to add peer: ");
+  displayHelp(" Received request to add peer.");
   peer.channel = CHANNEL;
   peer.ifidx = WIFI_IF_AP;
   peer.encrypt = 0;
@@ -344,25 +348,34 @@ void addPeer2(const uint8_t *peerMacAddress)
   if (esp_now_add_peer(&peer) == ESP_OK)          // try to add unit #2 as a peer 
   {
      setStatusLED(GREEN);                         // it worked, so turn LED green
-     Serial.println("SUCCESS");   
+     Serial.println("SUCCESS"); 
+     displayHelp(" SUCCESS");  
   }
   else
   {
      setStatusLED(RED);                           // couldn't add unit #2  
-     Serial.println("FAILED");  
+     Serial.println("FAILED"); 
+     displayHelp(" FAILED"); 
   }
 }
 
 void addPeer()
 {
   Serial.print("Attempting to join network: ");
+  displayHelp("Attempting to join network...");
   const uint8_t *peer_addr = peer.peer_addr;
   bool exists = esp_now_is_peer_exist(peer_addr);
   if(!exists) 
   {
     esp_err_t result = esp_now_add_peer(&peer);                      // attempt pair with unit #1
-    if (result==ESP_OK) Serial.println("SUCCESS");
-    else if (result==ESP_ERR_ESPNOW_NOT_FOUND) Serial.println("NOT FOUND");
+    if (result==ESP_OK) {
+      Serial.println("SUCCESS");
+      displayHelp(" SUCCESS");
+    }
+    else if (result==ESP_ERR_ESPNOW_NOT_FOUND) {
+      Serial.println("NOT FOUND");
+      displayHelp(" NOT FOUND");
+    }
     else Serial.println((int)result);
   }
 
@@ -384,6 +397,7 @@ void sendWireless(uint8_t data)
 void sendAddPeerCmd()
 {
   Serial.println("Now asking peer to add me");
+  displayHelp(" Now asking peer to add me...");
   delay(500); 
   sendWireless(CMD_ADDME);                        // send message to other unit:
   delay(100);                                     // add me as a network peer
@@ -393,16 +407,19 @@ void closeWireless()
 {
   setStatusLED(BLACK);                            // erase two-way status LED
   Serial.println("Telling peer I am closing");
+  displayHelp("Telling peer I am closing...");
   sendWireless(CMD_LEAVING);                      // message other unit: I am leaving
   esp_now_deinit();                               // quit esp_now
   WiFi.softAPdisconnect(true);
   WiFi.disconnect();
   Serial.println("Wireless now closed.\n");
+  displayHelp(" Wireless now closed");
 }
 
 void initWireless()
 {
   Serial.println("Initializing wireless now");
+  displayHelp(" Initializing wireless now...");
   Serial.print("My MAC = ");                    
   Serial.println(WiFi.macAddress());
   WiFi.mode(WIFI_MODE_STA);                       // set to station mode
@@ -425,10 +442,12 @@ void initWireless()
   else                                            // no, so we are unit #1:
   {  
     Serial.println("No network found");
+    displayHelp(" No network found");
     WiFi.mode(WIFI_AP);                           // set device in AP mode
     configDeviceAP();                             // set AP name & password
     initESPNow();                                 // and set up ESP-NOW
     Serial.println("Waiting for connection");
+    displayHelp("   Waiting for connection...");
   }
 }  
 
@@ -731,18 +750,23 @@ void sendKochLesson(int lesson)                   // send letter/number groups..
 
 void introLesson(int lesson)                      // helper fn for getLessonNumber()
 {
-  newScreen();                                    // start with clean screen
+  newScreen();     
+  tft.setTextColor(ORANGE);                               // start with clean screen
   tft.print("You are in lesson ");
   tft.println(lesson);                            // show lesson number
-  tft.println("\nCharacters: ");                  
-  tft.setTextColor(CYAN);
+  tft.println("\nCharacters: ");             
+  tft.setTextColor(YELLOW);
+  tft.print(" ");
   for (int i=0; i<=lesson; i++)                   // show characters in this lession
   {
     tft.print(koch[i]);
-    tft.print(" ");
+    //tft.print(" ");
   }
+  tft.setTextColor(ORANGE);
+  tft.println("\n\n Rotate knob to choose      lesson number.");
+  tft.println("\n Send <dit> to begin/pause/resume");
+  tft.println("\nEach lesson is a screenful of characters to copy.");  
   tft.setTextColor(textColor);
-  tft.println("\n\nPress <dit> to begin");  
 }
 
 int getLessonNumber()
@@ -754,9 +778,9 @@ int getLessonNumber()
     int dir = readEncoder();
     if (dir!=0)                                   // user rotated encoder knob:
     {
-      lesson += dir;                              // ...so change speed up/down 
+      lesson += dir;                              // ...so change lesson number up/down 
       if (lesson<1) lesson = 1;                   // dont go below 1 
-      if (lesson>kochLevel) lesson = kochLevel;   // dont go above maximum
+      if (lesson>maxkoch) lesson = maxkoch;       // dont go above maximum
       introLesson(lesson);                        // show new lesson number
     }
   }
@@ -770,12 +794,12 @@ void sendKoch()
     int lesson = getLessonNumber();               // allow user to select lesson
     if (button_pressed) return;                   // user quit, so sad
     sendKochLesson(lesson);                       // do the lesson                      
-    setTopMenu("Get 90%? Dit=YES, Dah=NO");       // ask user to score lesson
+    setTopMenu(" Get 90%? Dit=YES, Dah=NO");       // ask user to score lesson
     while (!button_pressed) {                     // wait for user response
        if (ditPressed())                          // dit = user advances to next level
        {  
          roger();                                 // acknowledge success
-         if (kochLevel<ELEMENTS(koch))        
+         if (kochLevel<maxkoch)        
            kochLevel++;                           // advance to next level
          saveConfig();                            // save it in EEPROM
          delay(1000);                             // give time for user to release dit
@@ -823,6 +847,10 @@ void randomCallsign(char* call)                   // returns with random US call
   addChar(call,randomNumber());                   // add zone number to callsign
   for (int i=0; i<random(1, 4); i++)              // Suffix contains 1-3 letters
     addChar(call,randomLetter());                 // add suffix letter(s) to call
+  if (random(0,20)<1)                             // replace with user's callsign randomly 
+  {
+    strcpy(call,myCall);
+  }                 
 }
 
 void randomRST(char* rst)
@@ -844,6 +872,7 @@ void sendNumbers()
 
 void sendLetters()                                
 { 
+  displayHelp("Send <dit> to pause/resume");
   while (!button_pressed) {
     for (int i=0; i<WORDSIZE; i++)                // group letters into "words"
       sendCharacter(randomLetter());              // send the letter 
@@ -878,6 +907,7 @@ void sendPunctuation()
 
 void sendWords()
 { 
+  displayHelp("Send <dit> to pause/resume");
   while (!button_pressed) {
     int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
     sendString(words[index]);                     // send the word
@@ -887,6 +917,7 @@ void sendWords()
 
 void sendCallsigns()                              // send random US callsigns
 { 
+  displayHelp("Send <dit> to pause/resume");
   char call[8];                                   // need string to stuff callsign into
   while (!button_pressed) {
     randomCallsign(call);                         // make it
@@ -897,6 +928,7 @@ void sendCallsigns()                              // send random US callsigns
 
 void sendQSO()
 {
+  displayHelp("Send <dit> to pause/resume");
   char otherCall[8];
   char temp[20];                              
   char qso[300];                                  // string to hold entire QSO
@@ -1011,6 +1043,7 @@ void sendFile(char* filename)                     // output a file to screen & m
   strcat(s,filename);                             // ESP32: prepend filename with slash
   const int pageSkip = 250;                       // number of characters to skip, if asked to
   newScreen();                                    // clear screen below menu
+  displayHelp("<dit> to pause/resume      -.-. to skip forward");
   bool wireless = longPress();                    // if long button press, send file wirelessly
   if (wireless) initWireless();                   // start wireless transmission
   button_pressed = false;                         // reset flag for new presses
@@ -1022,7 +1055,7 @@ void sendFile(char* filename)                     // output a file to screen & m
       if (ch=='\n') ch = ' ';                     // convert LN to a space
       sendCharacter(ch);                          // and send it
       if (wireless) sendWireless(ch);
-      if (ditPressed() && dahPressed())           // user wants to 'skip' ahead:
+      if (ditPressed() && dahPressed())            // user wants to 'skip' ahead by sending a C
       {
         sendString("=  ");                        // acknowledge the skip with ~BT
         for (int i=0; i<pageSkip; i++)
@@ -1167,6 +1200,7 @@ void practice()                                   // get Morse from user & displ
 void copyCallsigns()                              // show a callsign & see if user can copy it
 {
   char call[8];
+  displayHelp("Send the callsign. Spacing matters.");
   while (!button_pressed)                      
   {  
     randomCallsign(call);                         // make a random callsign       
@@ -1177,6 +1211,7 @@ void copyCallsigns()                              // show a callsign & see if us
 void copyOneChar()
 {
   char text[8];  
+  displayHelp("Send the character.");
   while (!button_pressed)                      
   {
     strcpy(text,"");                              // start with empty string  
@@ -1188,6 +1223,7 @@ void copyOneChar()
 void copyTwoChars()
 {
   char text[8];   
+  displayHelp("Send the two characters.");
   while (!button_pressed)                      
   {
     strcpy(text,"");                              // start with empty string  
@@ -1197,9 +1233,10 @@ void copyTwoChars()
   }
 }
 
-void copyWords()                                  // show a callsign & see if user can copy it
+void copyWords()                                  // show a word & see if user can copy it
 {
-  char text[10]; 
+  char text[10];
+  displayHelp("Send the word. Spacing matters."); 
   while (!button_pressed)                      
   { 
     int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
@@ -1265,7 +1302,7 @@ void mimic1(char *text)
 
 void showHitsAndMisses(int hits, int misses)      // helper fn for mimic2()
 {                      
-  const int x=200,y1=50,y2=140,wd=105,ht=80;      // posn & size of scorecard             
+  const int x=200,y1=46,y2=134,wd=105,ht=75;      // posn & size of scorecard             
   displayNumber(hits,GREEN,x,y1,wd,ht);           // show the hits in green
   displayNumber(misses,RED,x,y2,wd,ht);           // show misses in red                               
 }
@@ -1273,6 +1310,7 @@ void showHitsAndMisses(int hits, int misses)      // helper fn for mimic2()
 void headCopy()                                  // show a callsign & see if user can copy it
 {
   char text[10]; 
+  displayHelp("Send what you hear.");
   while (!button_pressed)                      
   { 
     int index=random(0, ELEMENTS(words));         // eeny, meany, miney, moe
@@ -1334,6 +1372,7 @@ void mimic (char* text)
 
 void flashcards()
 {
+  displayHelp("Say the character, before it is displayed.");
   tft.setTextSize(7);
   while (!button_pressed)
   {
@@ -1818,7 +1857,7 @@ void setCallsign() {
 
 void clearMenu()
 {
-  tft.fillRect(0,0,DISPLAYWIDTH-30,ROWSPACING,bgColor);   
+  tft.fillRect(0,0,DISPLAYWIDTH-1,ROWSPACING,bgColor);   
 }
 
 void clearBody()
@@ -1828,11 +1867,35 @@ void clearBody()
 
 void clearScreen()
 {
-  tft.fillScreen(bgColor);                        // fill screen with background color
-  tft.drawLine(0,TOPMARGIN-6,DISPLAYWIDTH,
-    TOPMARGIN-6, YELLOW);                         // draw horizontal menu line  
+  tft.fillScreen(bgColor);                      // fill screen with background color
+  drawMenuLine();
 } 
-
+void drawMenuLine() 
+{
+    tft.drawLine(0,TOPMARGIN-6,DISPLAYWIDTH,TOPMARGIN-6, YELLOW); // draw horizontal menu line  
+}
+void displayTopWPM()
+{
+  tft.setTextSize(2);                             // sets WPM text size
+  tft.setCursor(205,0);                           // right side of top menu, before Icons 
+  tft.setTextColor(ORANGE, bgColor);
+  if(charSpeed != codeSpeed)
+  {
+     tft.print(charSpeed);
+     tft.print("/");
+  }
+  tft.print(codeSpeed);
+  tft.print(" WPM");
+  tft.setTextColor(textColor, bgColor);
+}
+void displayHelp(char *str)
+{
+  tft.setTextSize(2);                             // sets help text size
+  tft.setCursor(2, MAXROW*ROWSPACING); // bottom of screen 
+  tft.setTextColor(ORANGE, bgColor);
+  tft.print(str);
+  tft.setTextColor(textColor, bgColor);
+}
 void newScreen()                                  // prepare display for new text.  Menu not distrubed
 {
   clearBody();                                    // clear screen below menu
@@ -1867,7 +1930,7 @@ void addCharacter(char c)
 int getMenuSelection()                            // Display menu system & get user selection
 {
   int item;
-  newScreen();                                    // start with fresh screen
+  if (!inStartup) newScreen();                                    // start with fresh screen
   menuCol = topMenu(mainMenu,ELEMENTS(mainMenu)); // show horiz menu & get user choice
   switch (menuCol)                                // now show menu that user selected:
   {
@@ -1886,7 +1949,12 @@ int getMenuSelection()                            // Display menu system & get u
 void setTopMenu(char *str)                        // erase menu & replace with new text
 {
   clearMenu();
+  if (inStartup) {
+    clearScreen();
+    clearBody();
+  }
   showMenuItem(str,0,0,FG,bgColor);
+  displayTopWPM();
 }
 
 void showSelection(int choice)                    // display current activity on top menu
@@ -1907,6 +1975,7 @@ void showMenuItem(char *item, int x, int y, int fgColor, int bgColor)
 int topMenu(char *menu[], int itemCount)          // Display a horiz menu & return user selection
 {
   int index = menuCol;                            // start w/ current row
+  clearMenu();
   button_pressed = false;                         // reset button flag
   for (int i = 0; i < itemCount; i++)             // for each item in menu                         
     showMenuItem(menu[i],i*MENUSPACING,0,FG,bgColor);  // display it 
@@ -1946,6 +2015,7 @@ int subMenu(char *menu[], int itemCount)          // Display drop-down menu & re
   int index=0,top=0,pos=0,x,y; 
   button_pressed = false;                         // reset button flag
   x = menuCol * MENUSPACING;                      // x-coordinate of this menu
+  clearBody();
   displayFrame(menu,0,itemCount);                 // display as many menu items as possible
   showMenuItem(menu[0],x,TOPMARGIN,               // highlight first item
     SELECTFG,SELECTBG);
@@ -2040,6 +2110,10 @@ void splashScreen()                               // not splashy at all!
   tft.setTextColor(CYAN);
   tft.setCursor(15, 90);      
   tft.print("Morse Code Tutor");                  // add title
+  tft.setTextSize(2);
+  tft.setCursor(52,160);
+  tft.setTextColor(ORANGE);
+  tft.print(VERSION);
   tft.setTextSize(1);
   tft.setCursor(50,220);
   tft.setTextColor(WHITE);
@@ -2058,8 +2132,9 @@ void setup()
   splashScreen();                                 // show we are ready
   initEncoder();                                  // attach encoder interrupts
   initMorse();                                    // attach paddles & adjust speed
-  delay(2000);                                    // keep splash screen on for a while
-  clearScreen();
+  delay(1000);                                    // keep splash screen on for a while
+  //clearScreen();
+  drawMenuLine();
 }
 
 
@@ -2067,10 +2142,10 @@ void loop()
 {
   int selection = startItem;                      // start with user specified startup screen
   if (!inStartup || (startItem<0))                // but, if there isn't one,                 
-    selection = getMenuSelection();               // get menu selection from user instead
-  inStartup = false;                              // reset startup flag
+    selection = getMenuSelection();               // get menu selection from user instead                   
   showSelection(selection);                       // display users selection at top of screen
-  newScreen();                                    // and clear the screen below it.
+  if (!inStartup) newScreen();                    // and clear the screen below it.
+  inStartup = false;                             // reset startup flag
   button_pressed = false;                         // reset flag for new presses
   randomSeed(millis());                           // randomize!
   score=0; hits=0; misses=0;                      // restart score for copy challenges  
