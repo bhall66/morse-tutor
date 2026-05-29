@@ -7,3 +7,5 @@ Inspired by "Morse Code Tutor" by Jack Purdum W8TEE.
 Full description and 8-part tutorial available at w8bh.net
 
 Folders in this project: "MorseTutor" contains the latest source code. "Tutorials" contains sketches for the 8-part tutorial.  "Troubleshooting" has sketches for hardware validation (screen, encoder, etc).  "Book texts" contains ASCII text for a few classic books.  Put them on your SD card for code practice.
+
+See the releases folder for already compiled binary files that may be uploaded to the Morse Tutor ESP32.
